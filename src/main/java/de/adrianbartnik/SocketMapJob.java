@@ -16,7 +16,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  * </pre>
  * and run this example with the hostname and the port as arguments.
  */
-public class SingleMapJob {
+public class SocketMapJob {
 
     public static void main(String[] args) throws Exception {
 
@@ -26,9 +26,9 @@ public class SingleMapJob {
         try {
             final ParameterTool params = ParameterTool.fromArgs(args);
             hostname = params.has("hostname") ? params.get("hostname") : "localhost";
-            port = params.getInt("port");
+            port = params.has("port") ? params.getInt("port") : 9000;
         } catch (Exception e) {
-            System.err.println("No port specified. Please run 'SingleMapJob " +
+            System.err.println("No port specified. Please run 'SocketMapJob " +
                     "--hostname <hostname> --port <port>', where hostname (localhost by default) " +
                     "and port is the address of the text server");
             System.err.println("To start a simple text server, run 'netcat -l <port>' and " +
@@ -49,6 +49,6 @@ public class SingleMapJob {
             }
         }).name("CustomMap").print().name("PrintSink").setParallelism(1);
 
-        env.execute("SingleMapJob for Masterthesis");
+        env.execute("SocketMapJob for Masterthesis");
     }
 }

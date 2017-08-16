@@ -15,18 +15,22 @@ import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
  */
 public class RabbitMQMapJob {
 
+    private static final String JOB_NAME = "RabbitMQMapJob for Masterthesis";
+
     public static void main(String[] args) throws Exception {
 
         // the host and the port to connect to
         final String hostname;
         final int port;
         final String queueName;
+        final boolean chaining;
 
         try {
             final ParameterTool params = ParameterTool.fromArgs(args);
             hostname = params.has("hostname") ? params.get("hostname") : "localhost";
             port = params.has("port") ? params.getInt("port") : 5672;
             queueName = params.has("queuename") ? params.get("queuename") : "defaultQueue";
+            chaining = params.has("chaining") && params.getBoolean("chaining");
         } catch (Exception e) {
             System.err.println("No port specified. Please run 'RabbitMQMapJob " +
                     "--hostname <hostname> --port <port>' --queueName <queueName>, where hostname " +
@@ -45,6 +49,10 @@ public class RabbitMQMapJob {
         // get the execution environment
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+        if (!chaining) {
+            env.disableOperatorChaining();
+        }
+
         final DataStream<String> stream = env
                 .addSource(new RMQSource<String>(
                         connectionConfig,
@@ -55,11 +63,11 @@ public class RabbitMQMapJob {
 
         stream.map(new MapFunction<String, String>() {
             @Override
-            public String map(String s) throws Exception {
-                return s.toLowerCase();
+            public String map(String input) throws Exception {
+                return input.toLowerCase();
             }
         }).name("CustomMap").print().name("PrintSink").setParallelism(1);
 
-        env.execute("RabbitMQMapJob for Masterthesis");
+        env.execute(JOB_NAME);
     }
 }

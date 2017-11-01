@@ -10,6 +10,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class OperatorStateJob extends AbstractRabbitMQMapJob {
+
+    private static final String JOB_NAME = "OperatorStateJob for Masterthesis";
+
+    public static void main(String[] args) throws Exception {
+
+        OperatorStateJob operatorStateJob = new OperatorStateJob();
+
+        operatorStateJob.executeJob(args, JOB_NAME);
+    }
+
     @Override
     protected void createJob(DataStream<String> source) {
         SingleOutputStreamOperator<String> countingMap =
@@ -23,9 +33,9 @@ public class OperatorStateJob extends AbstractRabbitMQMapJob {
      */
     private class CountingMap extends RichMapFunction<String, String> implements ListCheckpointed<Long> {
 
-        private transient Long numberOfProcessedElements;
+        private long numberOfProcessedElements = 0;
 
-        private transient String taskNameWithSubtasks;
+        private String taskNameWithSubtasks;
 
         @Override
         public void open(Configuration parameters) throws Exception {

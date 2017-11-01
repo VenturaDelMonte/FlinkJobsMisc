@@ -14,7 +14,13 @@ import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
  */
 public abstract class AbstractRabbitMQMapJob {
 
+    private static final int CHECKPOINTING_INTERVAL = 500;
+
     void executeJob(String[] args, String jobName) throws Exception {
+        executeJob(args, jobName, false);
+    }
+
+    void executeJob(String[] args, String jobName, boolean enableCheckpointing) throws Exception {
 
         // the host and the port to connect to
         final String hostname;
@@ -48,6 +54,10 @@ public abstract class AbstractRabbitMQMapJob {
 
         if (!chaining) {
             env.disableOperatorChaining();
+        }
+
+        if (enableCheckpointing) {
+            env.enableCheckpointing(CHECKPOINTING_INTERVAL);
         }
 
         final DataStream<String> stream = env

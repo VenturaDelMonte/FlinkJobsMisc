@@ -17,7 +17,7 @@ public class OperatorStateJob extends AbstractRabbitMQMapJob {
 
         OperatorStateJob operatorStateJob = new OperatorStateJob();
 
-        operatorStateJob.executeJob(args, JOB_NAME);
+        operatorStateJob.executeJob(args, JOB_NAME, true);
     }
 
     @Override

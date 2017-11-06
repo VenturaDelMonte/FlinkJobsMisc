@@ -23,7 +23,7 @@ public class OperatorStateJob extends AbstractRabbitMQMapJob {
     @Override
     protected void createJob(DataStream<String> source) {
         SingleOutputStreamOperator<String> countingMap =
-                source.map(new CountingMap()).name("CountingMap").setParallelism(3);
+                source.map(new CountingMap()).name("CountingMap");
 
         countingMap.writeAsText("operatorStateJobSink").name("OperatorStateJob").setParallelism(2);
     }

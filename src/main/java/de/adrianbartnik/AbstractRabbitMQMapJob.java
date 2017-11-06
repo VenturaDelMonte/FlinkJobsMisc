@@ -30,10 +30,10 @@ public abstract class AbstractRabbitMQMapJob {
 
         try {
             final ParameterTool params = ParameterTool.fromArgs(args);
-            hostname = params.has("hostname") ? params.get("hostname") : "localhost";
-            port = params.has("port") ? params.getInt("port") : 5672;
-            queueName = params.has("queuename") ? params.get("queuename") : "defaultQueue";
-            chaining = params.has("chaining") && params.getBoolean("chaining");
+            hostname = params.get("hostname", "localhost");
+            port = params.getInt("port", 5672);
+            queueName = params.get("queuename", "defaultQueue");
+            chaining = params.getBoolean("chaining", false);
         } catch (Exception e) {
             System.err.println("No port specified. Please run '<jar> " +
                     "--hostname <hostname> --port <port>' --queueName <queueName>, where hostname " +

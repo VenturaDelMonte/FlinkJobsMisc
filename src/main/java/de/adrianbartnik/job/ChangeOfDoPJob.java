@@ -14,16 +14,16 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  * <p>
  * <p>This program connects to a rabbitMQ instance and reads strings.
  */
-public class ChangeOfDoPJob implements FlinkJobFactory.JobCreator<String> {
+public class ChangeOfDoPJob implements FlinkJobFactory.JobCreator<String, String> {
 
     private static final String JOB_NAME = "ChangeOfDoPJob";
 
     public static void main(String[] args) throws Exception {
 
-        FlinkJobFactory<String> creator = new FlinkJobFactory<>(args, false, false);
+        FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, false);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new RabbitMQSource(), new ChangeOfDoPJob(), new TextOutputSink());
+                creator.createJob(new RabbitMQSource(), new ChangeOfDoPJob(), new TextOutputSink<String>());
 
         job.execute(JOB_NAME);
     }

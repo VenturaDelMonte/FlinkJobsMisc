@@ -7,16 +7,16 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-public class LowerCaseJob implements FlinkJobFactory.JobCreator<String> {
+public class LowerCaseJob implements FlinkJobFactory.JobCreator<String, String> {
 
     private static final String JOB_NAME = "LowerCaseMapJob";
 
     public static void main(String[] args) throws Exception {
 
-        FlinkJobFactory<String> creator = new FlinkJobFactory<>(args, false, false);
+        FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, false);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new RabbitMQSource(), new LowerCaseJob(), new TextOutputSink());
+                creator.createJob(new RabbitMQSource(), new LowerCaseJob(), new TextOutputSink<String>());
 
         job.execute(JOB_NAME);
     }

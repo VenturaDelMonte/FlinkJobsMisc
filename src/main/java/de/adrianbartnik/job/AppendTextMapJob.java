@@ -10,16 +10,16 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 /**
  * Simple job with one mapper, that appends text to all incoming tuples.
  */
-public class AppendTextMapJob implements FlinkJobFactory.JobCreator<String> {
+public class AppendTextMapJob implements FlinkJobFactory.JobCreator<String, String> {
 
     private static final String JOB_NAME = "AppendTextMapJob";
 
     public static void main(String[] args) throws Exception {
 
-        FlinkJobFactory<String> creator = new FlinkJobFactory<>(args, false, false);
+        FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, false);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new RabbitMQSource(), new AppendTextMapJob(), new TextOutputSink());
+                creator.createJob(new RabbitMQSource(), new AppendTextMapJob(), new TextOutputSink<String>());
 
         job.execute(JOB_NAME);
     }

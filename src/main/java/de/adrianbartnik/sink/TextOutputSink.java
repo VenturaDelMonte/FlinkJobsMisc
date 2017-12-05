@@ -3,7 +3,7 @@ package de.adrianbartnik.sink;
 import de.adrianbartnik.factory.FlinkJobFactory;
 import org.apache.flink.streaming.api.datastream.DataStream;
 
-public class TextOutputSink implements FlinkJobFactory.SinkCreator<String> {
+public class TextOutputSink<T> implements FlinkJobFactory.SinkCreator<T> {
 
     private static final String OPERATOR_NAME = "JobSink";
 
@@ -22,7 +22,7 @@ public class TextOutputSink implements FlinkJobFactory.SinkCreator<String> {
     }
 
     @Override
-    public void addSink(String[] arguments, DataStream<String> dataSource) {
+    public void addSink(String[] arguments, DataStream<T> dataSource) {
         dataSource.writeAsText(path).name(OPERATOR_NAME).setParallelism(parallelism);
     }
 }

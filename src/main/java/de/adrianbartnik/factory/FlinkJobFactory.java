@@ -3,7 +3,7 @@ package de.adrianbartnik.factory;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-public class FlinkJobFactory<T> {
+public class FlinkJobFactory<INPUT, OUTPUT> {
 
     private static final int CHECKPOINTING_INTERVAL = 500;
 
@@ -18,9 +18,9 @@ public class FlinkJobFactory<T> {
         this.chaining = chaining;
     }
 
-    public StreamExecutionEnvironment createJob(SourceCreator<T> sourceCreator,
-                                                JobCreator<T> jobCreator,
-                                                SinkCreator<T> sinkCreator) {
+    public StreamExecutionEnvironment createJob(SourceCreator<INPUT> sourceCreator,
+                                                JobCreator<INPUT, OUTPUT> jobCreator,
+                                                SinkCreator<OUTPUT> sinkCreator) {
         StreamExecutionEnvironment executionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
 
         if (!chaining) {
@@ -32,9 +32,9 @@ public class FlinkJobFactory<T> {
             executionEnvironment.getCheckpointConfig().setMaxConcurrentCheckpoints(50);
         }
 
-        DataStream<T> source = sourceCreator.createSource(arguments, executionEnvironment);
+        DataStream<INPUT> source = sourceCreator.createSource(arguments, executionEnvironment);
 
-        DataStream<T> stream = jobCreator.addOperators(arguments, source);
+        DataStream<OUTPUT> stream = jobCreator.addOperators(arguments, source);
         sinkCreator.addSink(arguments, stream);
 
         return executionEnvironment;
@@ -44,8 +44,8 @@ public class FlinkJobFactory<T> {
         DataStream<T> createSource(String arguments[], StreamExecutionEnvironment executionEnvironment);
     }
 
-    public interface JobCreator<T> {
-        DataStream<T> addOperators(String arguments[], DataStream<T> dataSource);
+    public interface JobCreator<IN, OUT> {
+        DataStream<OUT> addOperators(String arguments[], DataStream<IN> dataSource);
     }
 
     public interface SinkCreator<T> {

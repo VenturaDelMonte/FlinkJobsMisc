@@ -11,22 +11,16 @@ import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 public class RabbitMQSource implements FlinkJobFactory.SourceCreator<String> {
     @Override
     public DataStream<String> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment) {
+        return createSource(arguments, executionEnvironment, 1);
+    }
 
-        final String hostname;
-        final int port;
-        final String queueName;
+    @Override
+    public DataStream<String> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment, int parallelism) {
 
-        try {
-            final ParameterTool params = ParameterTool.fromArgs(arguments);
-            hostname = params.get("hostname", "localhost");
-            port = params.getInt("port", 5672);
-            queueName = params.get("queuename", "defaultQueue");
-        } catch (Exception e) {
-            System.err.println("No port specified. Please run '<jar> " +
-                    "--hostname <hostname> --port <port>' --queueName <queueName>, where hostname " +
-                    "(localhost by default) and port is the address of the rabbitMQ instance");
-            throw new RuntimeException("No port specified.");
-        }
+        final ParameterTool params = ParameterTool.fromArgs(arguments);
+        final String hostname = params.get("hostname", "localhost");
+        final int port = params.getInt("port", 5672);
+        final String queueName = params.get("queuename", "defaultQueue");
 
         final RMQConnectionConfig connectionConfig = new RMQConnectionConfig.Builder()
                 .setHost(hostname)
@@ -43,6 +37,6 @@ public class RabbitMQSource implements FlinkJobFactory.SourceCreator<String> {
                         true,       // use correlation ids; can be false if only at-least-once is required
                         new SimpleStringSchema())) // deserialization schema to turn messages into Java objects
                 .name("RabbitMQSource")
-                .setParallelism(1);                // non-parallel source is only required for exactly-once
+                .setParallelism(parallelism);      // non-parallel source is only required for exactly-once
     }
 }

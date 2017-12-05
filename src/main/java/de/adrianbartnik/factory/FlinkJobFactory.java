@@ -42,13 +42,19 @@ public class FlinkJobFactory<INPUT, OUTPUT> {
 
     public interface SourceCreator<T> {
         DataStream<T> createSource(String arguments[], StreamExecutionEnvironment executionEnvironment);
+
+        DataStream<T> createSource(String arguments[], StreamExecutionEnvironment executionEnvironment, int parallelism);
     }
 
     public interface JobCreator<IN, OUT> {
         DataStream<OUT> addOperators(String arguments[], DataStream<IN> dataSource);
+
+        DataStream<OUT> addOperators(String arguments[], DataStream<IN> dataSource, int parallelism);
     }
 
     public interface SinkCreator<T> {
         void addSink(String arguments[], DataStream<T> dataSource);
+
+        void addSink(String arguments[], DataStream<T> dataSource, int parallelism);
     }
 }

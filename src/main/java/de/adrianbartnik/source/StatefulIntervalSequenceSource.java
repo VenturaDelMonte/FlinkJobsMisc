@@ -143,6 +143,11 @@ public class StatefulIntervalSequenceSource extends RichParallelSourceFunction<L
 
     @Override
     public DataStream<Long> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment) {
+        return createSource(arguments, executionEnvironment, 2);
+    }
+
+    @Override
+    public DataStream<Long> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment, int parallelism) {
         return new DataStreamSource<>(executionEnvironment,
                 TypeInformation.of(Long.class),
                 new StreamSource<>(this),

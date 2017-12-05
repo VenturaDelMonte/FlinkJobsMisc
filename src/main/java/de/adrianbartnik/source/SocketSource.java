@@ -9,7 +9,11 @@ public class SocketSource implements FlinkJobFactory.SourceCreator<String> {
 
     @Override
     public DataStream<String> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment) {
+        return createSource(arguments, executionEnvironment, 1);
+    }
 
+    @Override
+    public DataStream<String> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment, int parallelism) {
         // the host and the port to connect to
         final ParameterTool params = ParameterTool.fromArgs(arguments);
         final String hostname = params.get("hostname", "localhost");

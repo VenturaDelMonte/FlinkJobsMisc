@@ -14,7 +14,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import java.util.Collections;
 import java.util.List;
 
-public class IndependentOperatorStateJob implements FlinkJobFactory.JobCreator<Long, String> {
+public class IndependentOperatorStateJob {
 
     private static final String JOB_NAME = "OperatorStateJob for Masterthesis";
 
@@ -24,14 +24,9 @@ public class IndependentOperatorStateJob implements FlinkJobFactory.JobCreator<L
 
         StreamExecutionEnvironment job =
                 creator.createJob(new StatefulIntervalSequenceSource(0, 100_000, 50),
-                        new IndependentOperatorStateJob(),
+                        new CountingMap<Long>(),
                         new TextOutputSink<String>());
 
         job.execute(JOB_NAME);
-    }
-
-    @Override
-    public DataStream<String> addOperators(String[] arguments, DataStream<Long> dataSource) {
-        return dataSource.map(new CountingMap<Long>()).name("CountingMap");
     }
 }

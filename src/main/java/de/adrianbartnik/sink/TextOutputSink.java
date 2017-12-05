@@ -9,20 +9,23 @@ public class TextOutputSink<T> implements FlinkJobFactory.SinkCreator<T> {
 
     private static final String DEFAULT_PATH = "jobOutput";
 
-    private final int parallelism;
     private final String path;
 
     public TextOutputSink() {
-        this(2, DEFAULT_PATH);
+        this(DEFAULT_PATH);
     }
 
-    public TextOutputSink(int parallelism, String path) {
-        this.parallelism = parallelism;
+    public TextOutputSink(String path) {
         this.path = path;
     }
 
     @Override
     public void addSink(String[] arguments, DataStream<T> dataSource) {
+        addSink(arguments, dataSource, 1);
+    }
+
+    @Override
+    public void addSink(String[] arguments, DataStream<T> dataSource, int parallelism) {
         dataSource.writeAsText(path).name(OPERATOR_NAME).setParallelism(parallelism);
     }
 }

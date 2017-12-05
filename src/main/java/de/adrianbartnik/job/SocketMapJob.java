@@ -1,8 +1,10 @@
 package de.adrianbartnik.job;
 
 import de.adrianbartnik.factory.FlinkJobFactory;
+import de.adrianbartnik.operator.LowercaseMapper;
 import de.adrianbartnik.sink.TextOutputSink;
 import de.adrianbartnik.source.RabbitMQSource;
+import de.adrianbartnik.source.SocketSource;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -18,7 +20,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  * </pre>
  * and run this example with the hostname and the port as arguments.
  */
-public class SocketMapJob implements FlinkJobFactory.JobCreator<String, String> {
+public class SocketMapJob {
 
     private static final String JOB_NAME = "SocketMapJob";
 
@@ -27,18 +29,8 @@ public class SocketMapJob implements FlinkJobFactory.JobCreator<String, String> 
         FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, false);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new RabbitMQSource(), new SocketMapJob(), new TextOutputSink<String>());
+                creator.createJob(new SocketSource(), new LowercaseMapper(), new TextOutputSink<String>());
 
         job.execute(JOB_NAME);
-    }
-
-    @Override
-    public DataStream<String> addOperators(String[] arguments, DataStream<String> dataSource) {
-        return dataSource.map(new MapFunction<String, String>() {
-            @Override
-            public String map(String tuple) throws Exception {
-                return tuple.toLowerCase();
-            }
-        }).name("LowerCaseMapper");
     }
 }

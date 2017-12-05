@@ -4,10 +4,9 @@ import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.operator.CountingMap;
 import de.adrianbartnik.sink.TextOutputSink;
 import de.adrianbartnik.source.RabbitMQSource;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-public class OperatorStateJob implements FlinkJobFactory.JobCreator<String, String> {
+public class OperatorStateJob {
 
     private static final String JOB_NAME = "OperatorStateJob";
 
@@ -16,13 +15,8 @@ public class OperatorStateJob implements FlinkJobFactory.JobCreator<String, Stri
         FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, false);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new RabbitMQSource(), new OperatorStateJob(), new TextOutputSink<String>());
+                creator.createJob(new RabbitMQSource(), new CountingMap<String>(), new TextOutputSink<String>());
 
         job.execute(JOB_NAME);
-    }
-
-    @Override
-    public DataStream<String> addOperators(String[] arguments, DataStream<String> dataSource) {
-        return dataSource.map(new CountingMap<String>()).name("CountingMap");
     }
 }

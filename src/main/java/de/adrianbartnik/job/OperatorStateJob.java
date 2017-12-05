@@ -1,31 +1,34 @@
-package de.adrianbartnik;
+package de.adrianbartnik.job;
 
+import de.adrianbartnik.factory.FlinkJobFactory;
+import de.adrianbartnik.sink.TextOutputSink;
+import de.adrianbartnik.source.RabbitMQSource;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.util.Collections;
 import java.util.List;
 
-public class OperatorStateJob extends AbstractRabbitMQMapJob {
+public class OperatorStateJob implements FlinkJobFactory.JobCreator<String> {
 
     private static final String JOB_NAME = "OperatorStateJob for Masterthesis";
 
     public static void main(String[] args) throws Exception {
 
-        OperatorStateJob operatorStateJob = new OperatorStateJob();
+        FlinkJobFactory<String> creator = new FlinkJobFactory<>(args, false, false);
 
-        operatorStateJob.executeJob(args, JOB_NAME, true);
+        StreamExecutionEnvironment job =
+                creator.createJob(new RabbitMQSource(), new OperatorStateJob(), new TextOutputSink());
+
+        job.execute(JOB_NAME);
     }
 
     @Override
-    protected void createJob(DataStream<String> source) {
-        SingleOutputStreamOperator<String> countingMap =
-                source.map(new CountingMap()).name("CountingMap");
-
-        countingMap.writeAsText("operatorStateJobSink").name("OperatorStateJob").setParallelism(2);
+    public DataStream<String> addOperators(String[] arguments, DataStream<String> dataSource) {
+        return dataSource.map(new CountingMap()).name("CountingMap");
     }
 
     /**

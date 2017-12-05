@@ -1,5 +1,6 @@
-package de.adrianbartnik;
+package de.adrianbartnik.source;
 
+import de.adrianbartnik.factory.FlinkJobFactory;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -7,33 +8,19 @@ import org.apache.flink.streaming.connectors.rabbitmq.RMQSource;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 
-/**
- * Modified the SocketWindowWordCount example from the flink project.
- * <p>
- * <p>This program connects to a rabbitMQ instance and reads strings.
- */
-public abstract class AbstractRabbitMQMapJob {
+public class RabbitMQSource implements FlinkJobFactory.SourceCreator<String> {
+    @Override
+    public DataStream<String> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment) {
 
-    private static final int CHECKPOINTING_INTERVAL = 500;
-
-    void executeJob(String[] args, String jobName) throws Exception {
-        executeJob(args, jobName, false);
-    }
-
-    void executeJob(String[] args, String jobName, boolean enableCheckpointing) throws Exception {
-
-        // the host and the port to connect to
         final String hostname;
         final int port;
         final String queueName;
-        final boolean chaining;
 
         try {
-            final ParameterTool params = ParameterTool.fromArgs(args);
+            final ParameterTool params = ParameterTool.fromArgs(arguments);
             hostname = params.get("hostname", "localhost");
             port = params.getInt("port", 5672);
             queueName = params.get("queuename", "defaultQueue");
-            chaining = params.getBoolean("chaining", false);
         } catch (Exception e) {
             System.err.println("No port specified. Please run '<jar> " +
                     "--hostname <hostname> --port <port>' --queueName <queueName>, where hostname " +
@@ -49,18 +36,7 @@ public abstract class AbstractRabbitMQMapJob {
                 .setPassword("guest")
                 .build();
 
-        // get the execution environment
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
-        if (!chaining) {
-            env.disableOperatorChaining();
-        }
-
-        if (enableCheckpointing) {
-            env.enableCheckpointing(CHECKPOINTING_INTERVAL);
-        }
-
-        final DataStream<String> stream = env
+        return executionEnvironment
                 .addSource(new RMQSource<>(
                         connectionConfig,
                         queueName,
@@ -68,11 +44,5 @@ public abstract class AbstractRabbitMQMapJob {
                         new SimpleStringSchema())) // deserialization schema to turn messages into Java objects
                 .name("RabbitMQSource")
                 .setParallelism(1);                // non-parallel source is only required for exactly-once
-
-        createJob(stream);
-
-        env.execute(jobName);
     }
-
-    protected abstract void createJob(DataStream<String> source);
 }

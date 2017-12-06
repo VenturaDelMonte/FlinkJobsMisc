@@ -1,4 +1,4 @@
-package de.adrianbartnik.job;
+package de.adrianbartnik.job.stateful;
 
 import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.operator.CountingMap;
@@ -20,7 +20,7 @@ public class IndependentOperatorStateJob {
 
     public static void main(String[] args) throws Exception {
 
-        FlinkJobFactory<Long, String> creator = new FlinkJobFactory<>(args, false, false);
+        FlinkJobFactory<Long, String> creator = new FlinkJobFactory<>(args, false, true);
 
         StreamExecutionEnvironment job =
                 creator.createJob(new StatefulIntervalSequenceSource(0, 100_000, 50),

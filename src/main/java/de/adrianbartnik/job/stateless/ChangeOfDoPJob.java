@@ -1,4 +1,4 @@
-package de.adrianbartnik.job;
+package de.adrianbartnik.job.stateless;
 
 import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.operator.FilterMapOperator;

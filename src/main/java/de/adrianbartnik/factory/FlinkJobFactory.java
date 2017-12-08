@@ -8,7 +8,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 public class FlinkJobFactory<INPUT, OUTPUT> {
 
-    private static final int CHECKPOINTING_INTERVAL = 500;
+    private static final int CHECKPOINTING_INTERVAL = 1000;
 
     private final String[] arguments;
 
@@ -32,7 +32,7 @@ public class FlinkJobFactory<INPUT, OUTPUT> {
 
         if (checkpointing) {
             executionEnvironment.enableCheckpointing(CHECKPOINTING_INTERVAL);
-            executionEnvironment.getCheckpointConfig().setMaxConcurrentCheckpoints(50);
+            executionEnvironment.getCheckpointConfig().setMaxConcurrentCheckpoints(10);
         }
 
         DataStream<INPUT> source = sourceCreator.createSource(arguments, executionEnvironment);

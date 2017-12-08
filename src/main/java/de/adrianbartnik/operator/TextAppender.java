@@ -4,17 +4,20 @@ import de.adrianbartnik.factory.FlinkJobFactory;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 
-public class TextAppender implements FlinkJobFactory.JobCreator<String, String>{
+public class TextAppender extends AbstractOperator<String, String> {
 
     private static final String OPERATOR_NAME = "TextAppender";
 
-    @Override
-    public DataStream<String> addOperators(String[] arguments, DataStream<String> dataSource) {
-        return addOperators(arguments, dataSource, 4);
+    public TextAppender() {
+        super();
+    }
+
+    public TextAppender(int parallelism) {
+        super(parallelism);
     }
 
     @Override
-    public DataStream<String> addOperators(String[] arguments, DataStream<String> dataSource, int parallelism) {
+    public DataStream<String> createOperator(String[] arguments, DataStream<String> dataSource) {
         return dataSource.map(new MapFunction<String, String>() {
             @Override
             public String map(String input) throws Exception {

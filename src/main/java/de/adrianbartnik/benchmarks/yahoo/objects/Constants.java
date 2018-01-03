@@ -1,12 +1,13 @@
-package de.adrianbartnik.flink.objects;
+package de.adrianbartnik.benchmarks.yahoo.objects;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * Static variables used through out the benchmark.
  */
-public class Constants {
+public class Constants implements Serializable {
 
     public static final String CAMPAIGNS_TOPIC = "campaigns";
     public static final String EVENTS_TOPIC = "events";

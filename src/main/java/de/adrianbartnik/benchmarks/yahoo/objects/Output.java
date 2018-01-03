@@ -1,8 +1,9 @@
-package de.adrianbartnik.flink.objects;
+package de.adrianbartnik.benchmarks.yahoo.objects;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class Output {
+public class Output implements Serializable {
     public final Timestamp time_window;
     public final String campaign_id;
     public final Long count;

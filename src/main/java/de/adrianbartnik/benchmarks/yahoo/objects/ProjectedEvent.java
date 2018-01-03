@@ -1,8 +1,9 @@
-package de.adrianbartnik.flink.objects;
+package de.adrianbartnik.benchmarks.yahoo.objects;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class ProjectedEvent {
+public class ProjectedEvent implements Serializable {
     public final String ad_id;
     public final Timestamp event_time;
 

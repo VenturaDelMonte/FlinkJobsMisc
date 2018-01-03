@@ -1,6 +1,8 @@
-package de.adrianbartnik.flink.objects;
+package de.adrianbartnik.benchmarks.yahoo.objects;
 
-public class CampaignAd {
+import java.io.Serializable;
+
+public class CampaignAd implements Serializable {
     public final String ad_id;
     public final String campaign_id;
 

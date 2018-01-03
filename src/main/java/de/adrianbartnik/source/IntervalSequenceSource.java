@@ -14,10 +14,11 @@ import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunctio
 import org.apache.flink.streaming.api.operators.StreamSource;
 import org.apache.flink.util.Preconditions;
 
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class IntervalSequenceSource extends AbstractSource<Long> {
+public class IntervalSequenceSource extends AbstractSource<Long> implements Serializable {
 
     private static final String OPERATOR_NAME = "StatefulIntervalSequenceSource";
 

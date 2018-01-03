@@ -1,15 +1,12 @@
-package de.adrianbartnik.flink.objects;
+package de.adrianbartnik.benchmarks.yahoo.objects;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
  * Input data
  */
-public class Event {
-
-    public static final String CAMPAIGNS_TOPIC = "campaigns";
-    public static final String EVENTS_TOPIC = "events";
-    public static final String OUTPUT_TOPIC = "output";
+public class Event implements Serializable {
 
     public final String user_id;
     public final String page_id;
@@ -19,7 +16,7 @@ public class Event {
     public final Timestamp event_time;
     public final String ip_address;
 
-    public Event(String user_id, String page_id, String ad_id, String ad_type, String event_type, Timestamp event_time, String ip_address){
+    public Event(String user_id, String page_id, String ad_id, String ad_type, String event_type, Timestamp event_time, String ip_address) {
         this.user_id = user_id;
         this.page_id = page_id;
         this.ad_id = ad_id;

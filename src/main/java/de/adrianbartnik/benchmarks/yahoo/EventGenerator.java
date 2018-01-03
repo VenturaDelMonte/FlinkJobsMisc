@@ -1,8 +1,8 @@
-package de.adrianbartnik.flink;
+package de.adrianbartnik.benchmarks.yahoo;
 
-import de.adrianbartnik.flink.objects.CampaignAd;
-import de.adrianbartnik.flink.objects.Constants;
-import de.adrianbartnik.flink.objects.Event;
+import de.adrianbartnik.benchmarks.yahoo.objects.CampaignAd;
+import de.adrianbartnik.benchmarks.yahoo.objects.Constants;
+import de.adrianbartnik.benchmarks.yahoo.objects.Event;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
 
 import java.util.List;

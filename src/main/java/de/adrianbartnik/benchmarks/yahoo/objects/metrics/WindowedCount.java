@@ -1,9 +1,10 @@
-package de.adrianbartnik.flink.objects.metrics;
+package de.adrianbartnik.benchmarks.yahoo.objects.metrics;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 
-public class WindowedCount {
+public class WindowedCount implements Serializable {
     public final Timestamp time_window;
     public final String campaign_id;
     public Long count;
@@ -19,5 +20,11 @@ public class WindowedCount {
         this.campaign_id = campaign_id;
         this.count = count;
         this.lastUpdate = lastUpdate;
+    }
+
+    @Override
+    public String toString() {
+        return "WindowedCount - time_window: " + time_window + " campaign_id: " + campaign_id
+                + " count: " + count + " last_update: " + lastUpdate;
     }
 }

@@ -40,16 +40,6 @@ public class FlinkJobFactory<INPUT, OUTPUT> {
 
         DataStream<INPUT> source = sourceCreator.createSource(arguments, executionEnvironment);
 
-        source.keyBy("one")
-                .keyBy("df")
-                .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
-                .reduce(new ReduceFunction<INPUT>() {
-                    @Override
-                    public INPUT reduce(INPUT value1, INPUT value2) throws Exception {
-                        return value1;
-                    }
-                });
-
         DataStream<OUTPUT> stream = jobCreator.createOperator(arguments, source);
         sinkCreator.createSink(arguments, stream);
 

@@ -1,16 +1,18 @@
-package de.adrianbartnik.flink;
+package de.adrianbartnik.benchmarks.yahoo;
 
-import de.adrianbartnik.flink.objects.CampaignAd;
-import de.adrianbartnik.flink.objects.Event;
-import de.adrianbartnik.flink.objects.metrics.WindowedCount;
+import de.adrianbartnik.benchmarks.yahoo.objects.CampaignAd;
+import de.adrianbartnik.benchmarks.yahoo.objects.Event;
+import de.adrianbartnik.benchmarks.yahoo.objects.metrics.WindowedCount;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.FoldFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.datastream.WindowedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.TimestampExtractor;
@@ -88,22 +90,21 @@ public class YahooBenchmark {
         @Override
         public void flatMap(Event value, Collector<Event> out) throws Exception {
             if (totalReceived == 0) {
-                System.out.println("ThroughputLogging:${System.currentTimeMillis()},${totalReceived}");
+                System.out.println("ThroughputLogging: " + System.currentTimeMillis() + "," + totalReceived);
             }
             totalReceived += 1;
             if (totalReceived % logFreq == 0) {
                 long currentTime = System.currentTimeMillis();
-                System.out.println("Throughput:${(totalReceived - lastTotalReceived) / (currentTime - lastTime) * 1000.0d}");
+                System.out.println("Throughput: " + (totalReceived - lastTotalReceived) / (currentTime - lastTime) * 1000.0d);
                 lastTime = currentTime;
                 lastTotalReceived = totalReceived;
-                System.out.println("ThroughputLogging:${System.currentTimeMillis()},${totalReceived}");
-
+                System.out.println("ThroughputLogging: " + System.currentTimeMillis() + "," + totalReceived);
             }
             out.collect(value);
         }
     }
 
-    static class StaticJoinMapper implements FlatMapFunction<Event, Tmp> {
+    static class StaticJoinMapper implements FlatMapFunction<Event, Tuple3<String, String, Timestamp>> {
 
         private final Map<String, String> campaigns;
 
@@ -112,36 +113,24 @@ public class YahooBenchmark {
         }
 
         @Override
-        public void flatMap(Event value, Collector<Tmp> out) throws Exception {
-            out.collect(new Tmp(campaigns.get(value.ad_id), value.ad_id, value.event_time));
+        public void flatMap(Event value, Collector<Tuple3<String, String, Timestamp>> out) throws Exception {
+            out.collect(new Tuple3<>(campaigns.get(value.ad_id), value.ad_id, value.event_time));
         }
     }
 
-    static class Tmp {
-        public final String tmp;
-        public final String ad_id;
-        public final Timestamp event_time;
-
-        public Tmp(String a, String b, Timestamp c) {
-            this.tmp = a;
-            this.ad_id = b;
-            this.event_time = c;
-        }
-    }
-
-    static class AdTimestampExtractor implements TimestampExtractor<Tmp> {
+    static class AdTimestampExtractor implements TimestampExtractor<Tuple3<String, String, Timestamp>> {
 
         long maxTimestampSeen = 0L;
 
         @Override
-        public long extractTimestamp(Tmp element, long currentTimestamp) {
-            long timestamp = element.event_time.getTime();
+        public long extractTimestamp(Tuple3<String, String, Timestamp> element, long currentTimestamp) {
+            long timestamp = element.f2.getTime();
             maxTimestampSeen = Math.max(timestamp, maxTimestampSeen);
             return timestamp;
         }
 
         @Override
-        public long extractWatermark(Tmp element, long currentTimestamp) {
+        public long extractWatermark(Tuple3<String, String, Timestamp> element, long currentTimestamp) {
             return Long.MIN_VALUE;
         }
 
@@ -168,13 +157,13 @@ public class YahooBenchmark {
         Preconditions.checkArgument(triggerIntervalMs >= 0, "Trigger interval can't be negative.");
 
         // Logging frequency in #records for throughput calculations
-        int logFreq = params.getInt("logFreq", 10000000);
+        int logFreq = params.getInt("logFreq", 10000);
 
         StreamExecutionEnvironment env = getExecutionEnvironment(parallelism);
 
-        if (params.getBoolean("enableObjectReuse", true)) {
-            env.getConfig().enableObjectReuse();
-        }
+//        if (params.getBoolean("enableObjectReuse", true)) {
+//            env.getConfig().enableObjectReuse();
+//        }
 
         List<CampaignAd> campaignAds = generateCampaignMapping(numCampaigns);
 
@@ -186,7 +175,7 @@ public class YahooBenchmark {
 
         DataStreamSource<Event> source = env.addSource(new EventGenerator(campaignAds, numberOfTuples));
 
-        WindowedStream<Tmp, Tuple, TimeWindow> windowedEvents = source
+        WindowedStream<Tuple3<String, String, Timestamp>, Tuple, TimeWindow> windowedEvents = source
                 .flatMap(new ThroughputLogger(logFreq))
                 .filter(new FilterFunction<Event>() {
                     @Override
@@ -205,14 +194,14 @@ public class YahooBenchmark {
         }
 
 
-        windowedEvents.fold(new WindowedCount(null, "", 0, new java.sql.Timestamp(0L)),
-                new FoldFunction<Tmp, WindowedCount>() {
+        SingleOutputStreamOperator<WindowedCount> fold = windowedEvents.fold(new WindowedCount(null, "", 0, new Timestamp(0L)),
+                new FoldFunction<Tuple3<String, String, Timestamp>, WindowedCount>() {
                     @Override
-                    public WindowedCount fold(WindowedCount accumulator, Tmp value) throws Exception {
+                    public WindowedCount fold(WindowedCount accumulator, Tuple3<String, String, Timestamp> value) throws Exception {
                         Timestamp lastUpdate;
 
-                        if (accumulator.lastUpdate.getTime() < value.event_time.getTime()) {
-                            lastUpdate = value.event_time;
+                        if (accumulator.lastUpdate.getTime() < value.f2.getTime()) {
+                            lastUpdate = value.f2;
                         } else {
                             lastUpdate = accumulator.lastUpdate;
                         }
@@ -226,10 +215,12 @@ public class YahooBenchmark {
                     public void apply(Tuple tuple, TimeWindow window, Iterable<WindowedCount> input, Collector<WindowedCount> out) throws Exception {
                         WindowedCount windowedCount = input.iterator().next();
                         out.collect(new WindowedCount(
-                                new java.sql.Timestamp(window.getStart()), (String) tuple.getField(0), windowedCount.count, windowedCount.lastUpdate));
+                                new Timestamp(window.getStart()), (String) tuple.getField(0), windowedCount.count, windowedCount.lastUpdate));
                     }
                 }
         );
+
+        fold.print();
 
         env.execute("Flink Yahoo Benchmark");
     }

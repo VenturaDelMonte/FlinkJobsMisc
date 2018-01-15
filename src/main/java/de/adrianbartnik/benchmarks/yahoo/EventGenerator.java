@@ -18,15 +18,17 @@ public class EventGenerator extends RichParallelSourceFunction<Event> {
     private final CampaignAd[] campaingsArray;
     private final int campaignLength;
     private final long maxNumberOfEvents;
+    private final int artificialDelay;
 
     private volatile boolean running = true;
 
     private long currentNumberOfEvents = 0;
 
-    EventGenerator(List<CampaignAd> campaigns, long maxNumberOfEvents) {
+    EventGenerator(List<CampaignAd> campaigns, long maxNumberOfEvents, int artificialDelay) {
         this.campaingsArray = campaigns.toArray(new CampaignAd[campaigns.size()]);
         this.campaignLength = campaigns.size();
         this.maxNumberOfEvents = maxNumberOfEvents;
+        this.artificialDelay = artificialDelay;
     }
 
     @Override
@@ -71,6 +73,8 @@ public class EventGenerator extends RichParallelSourceFunction<Event> {
                     new java.sql.Timestamp(ts),
                     "255.255.255.255"); // generic ipaddress, irrelevant
             ctx.collect(event);
+
+            Thread.sleep(artificialDelay);
 
             currentNumberOfEvents++;
 

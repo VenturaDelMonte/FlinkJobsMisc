@@ -154,6 +154,7 @@ public class YahooBenchmark {
         int numberOfTuples = params.getInt("numberOfTuples", 50000);
         int rampUpTimeSeconds = params.getInt("rampUpTimeSeconds", 0);
         int triggerIntervalMs = params.getInt("triggerIntervalMs", 0);
+        int artificialDelay = params.getInt("artificialDelayMs", 0);
         Preconditions.checkArgument(triggerIntervalMs >= 0, "Trigger interval can't be negative.");
 
         // Logging frequency in #records for throughput calculations
@@ -173,7 +174,7 @@ public class YahooBenchmark {
             campaignLookup.put(campaignAd.ad_id, campaignAd.campaign_id);
         }
 
-        DataStreamSource<Event> source = env.addSource(new EventGenerator(campaignAds, numberOfTuples));
+        DataStreamSource<Event> source = env.addSource(new EventGenerator(campaignAds, numberOfTuples, artificialDelay));
 
         WindowedStream<Tuple3<String, String, Timestamp>, Tuple, TimeWindow> windowedEvents = source
                 .flatMap(new ThroughputLogger(logFreq))
@@ -213,9 +214,13 @@ public class YahooBenchmark {
                 new WindowFunction<WindowedCount, WindowedCount, Tuple, TimeWindow>() {
                     @Override
                     public void apply(Tuple tuple, TimeWindow window, Iterable<WindowedCount> input, Collector<WindowedCount> out) throws Exception {
-                        WindowedCount windowedCount = input.iterator().next();
-                        out.collect(new WindowedCount(
-                                new Timestamp(window.getStart()), (String) tuple.getField(0), windowedCount.count, windowedCount.lastUpdate));
+                        for (WindowedCount windowedCount : input) {
+                            out.collect(new WindowedCount(
+                                    new Timestamp(window.getStart()),
+                                    (String) tuple.getField(0),
+                                    windowedCount.count,
+                                   windowedCount.lastUpdate));
+                        }
                     }
                 }
         );

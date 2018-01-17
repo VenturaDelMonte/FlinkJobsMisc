@@ -21,10 +21,7 @@ import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.Serializable;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.MalformedInputException;
@@ -138,12 +135,11 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
 
                     socket.connect(new InetSocketAddress(hostname, port), CONNECTION_TIMEOUT_TIME);
 
-                    PrintWriter output = new PrintWriter(socket.getOutputStream());
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    PrintStream output = new PrintStream(socket.getOutputStream(), true);
 
                     // Necessary, so port stays open after disconnect
-                    output.write("from:" + numberProcessedMessages + ":reconnect");
-
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    output.print("from:" + numberProcessedMessages + ":reconnect\n");
 
                     char[] cbuf = new char[8192];
                     int bytesRead;

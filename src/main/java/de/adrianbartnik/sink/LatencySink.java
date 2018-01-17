@@ -9,20 +9,13 @@ import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.typeutils.InputTypeConfigurable;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.sql.Timestamp;
 
-public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, Long>> {
+public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, Long>> implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    private static final Logger LOG = LoggerFactory.getLogger(LatencySink.class);
 
     private final String path;
 
@@ -39,7 +32,7 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
     @Override
     public void createSink(String[] arguments, DataStream<Tuple4<Timestamp, String, String, Long>> dataSource) {
         dataSource
-                .writeUsingOutputFormat(new CustomLatencyOutputFormat<Tuple4<Timestamp, String, String, Long>>(new Path(path)))
+                .writeUsingOutputFormat(new CustomLatencyOutputFormat<>(new Path(path)))
                 .setParallelism(parallelism);
     }
 
@@ -52,9 +45,11 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
     public class CustomLatencyOutputFormat<T extends Tuple4<Timestamp, String, String, Long>> extends FileOutputFormat<T>
             implements InputTypeConfigurable {
 
+        private static final long serialVersionUID = 1L;
+
         private transient Writer wrt;
 
-        private final String fieldDelimiter = String.valueOf(CsvInputFormat.DEFAULT_FIELD_DELIMITER);
+        private final String fieldDelimiter = CsvInputFormat.DEFAULT_FIELD_DELIMITER;
 
         private final String recordDelimiter = CsvInputFormat.DEFAULT_LINE_DELIMITER;
 
@@ -89,7 +84,7 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
         @Override
         public void writeRecord(T element) throws IOException {
 
-            this.wrt.write("" + (element.f0.getTime() - System.currentTimeMillis()));
+            this.wrt.write("" + (System.currentTimeMillis() - element.f0.getTime()));
             this.wrt.write(this.fieldDelimiter);
             this.wrt.write(element.f1);
             this.wrt.write(this.fieldDelimiter);
@@ -98,6 +93,7 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
             this.wrt.write("" + element.f3);
 
             this.wrt.write(this.recordDelimiter);
+            this.wrt.flush();
         }
 
         // --------------------------------------------------------------------------------------------
@@ -107,7 +103,6 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
         }
 
         /**
-         *
          * The purpose of this method is solely to check whether the data type to be processed
          * is in fact a tuple type.
          */

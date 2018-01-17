@@ -22,12 +22,11 @@ public class ParallelSocketOperatorStateJob {
     public static void main(String[] args) throws Exception {
 
         final ParameterTool params = ParameterTool.fromArgs(args);
-        final int timestampExtractorParallelism = params.getInt("timestampParallelism", 3);
         final int mapParallelism = params.getInt("mapParallelism", 4);
         final int sinkParallelism = params.getInt("sinkParallelism", 2);
         final String hostnames_string = params.get("hostnames");
         final String ports_string = params.get("ports");
-        final String output_path = params.get("path");
+        final String output_path = params.get("path", "benchmarkOutput");
 
         if (hostnames_string == null || hostnames_string.isEmpty() || ports_string == null || ports_string.isEmpty()) {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");

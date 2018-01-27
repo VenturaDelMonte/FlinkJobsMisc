@@ -1,5 +1,6 @@
 package de.adrianbartnik.source;
 
+import org.apache.flink.api.common.functions.StoppableFunction;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -65,7 +66,8 @@ public class IntervalSequenceSource extends AbstractSource<Long> implements Seri
      * <p>This strategy guarantees that each element will be emitted exactly-once, but elements will not
      * necessarily be emitted in ascending order, even for the same tasks.
      */
-    private class StatefulIntervalSequenceSource extends RichParallelSourceFunction<Long> implements CheckpointedFunction {
+    private class StatefulIntervalSequenceSource extends RichParallelSourceFunction<Long>
+            implements CheckpointedFunction, StoppableFunction {
 
         private static final long serialVersionUID = 1L;
 
@@ -167,6 +169,11 @@ public class IntervalSequenceSource extends AbstractSource<Long> implements Seri
             for (Long v : this.valuesToEmit) {
                 this.checkpointedState.add(v);
             }
+        }
+
+        @Override
+        public void stop() {
+            isRunning = false;
         }
     }
 

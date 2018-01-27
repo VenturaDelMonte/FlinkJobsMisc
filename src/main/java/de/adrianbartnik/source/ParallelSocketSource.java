@@ -1,6 +1,7 @@
 package de.adrianbartnik.source;
 
 import org.apache.flink.annotation.PublicEvolving;
+import org.apache.flink.api.common.functions.StoppableFunction;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.state.OperatorStateStore;
@@ -65,7 +66,7 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
 
     @PublicEvolving
     public class SocketTextStreamFunction extends RichParallelSourceFunction<Tuple2<Timestamp, String>>
-            implements CheckpointedFunction {
+            implements CheckpointedFunction, StoppableFunction {
 
         private static final String STATE_HOSTNAMES = "hostnames";
         private static final String STATE_PORTS = "ports";
@@ -269,6 +270,18 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
                 restored = true;
             } else {
                 LOG.info("No restore state for ParallelSocketSource");
+            }
+        }
+
+        @Override
+        public void stop() {
+            isRunning = false;
+
+            // we need to close the socket as well, because the Thread.interrupt() function will
+            // not wake the thread in the socketStream.read() method when blocked.
+            Socket theSocket = this.currentSocket;
+            if (theSocket != null) {
+                IOUtils.closeSocket(theSocket);
             }
         }
     }

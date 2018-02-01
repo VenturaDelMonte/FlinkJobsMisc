@@ -3,6 +3,7 @@ package de.adrianbartnik.factory;
 import de.adrianbartnik.operator.AbstractOperator;
 import de.adrianbartnik.sink.AbstractSink;
 import de.adrianbartnik.source.AbstractSource;
+import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -18,6 +19,8 @@ public class Flink2OperatorJobFactory<INPUT, INTERMEDIATE, OUTPUT> extends Flink
                                                 AbstractSink<OUTPUT> sinkCreator) {
 
         StreamExecutionEnvironment executionEnvironment = setupExecutionEnvironment();
+
+        executionEnvironment.setRestartStrategy(new RestartStrategies.NoRestartStrategyConfiguration());
 
         DataStream<INPUT> source = sourceCreator.createSource(arguments, executionEnvironment);
 

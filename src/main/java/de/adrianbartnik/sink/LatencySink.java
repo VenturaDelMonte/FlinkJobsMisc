@@ -7,13 +7,20 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.io.CsvInputFormat;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.typeutils.InputTypeConfigurable;
+import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.sql.Timestamp;
 
 public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, Long>> implements Serializable {
+
+    private static final String OPERATOR_NAME = "LatencySink";
+
+    private static final Logger LOG = LoggerFactory.getLogger(LatencySink.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -33,7 +40,8 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
     public void createSink(String[] arguments, DataStream<Tuple4<Timestamp, String, String, Long>> dataSource) {
         dataSource
                 .writeUsingOutputFormat(new CustomLatencyOutputFormat<>(new Path(path)))
-                .setParallelism(parallelism);
+                .setParallelism(parallelism)
+                .name(OPERATOR_NAME);
     }
 
     /**
@@ -79,6 +87,18 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
                 this.wrt.close();
             }
             super.close();
+
+            FileSystem fileSystem = getOutputFilePath().getFileSystem();
+
+            Path newDestination = new Path(actualFilePath.toUri().toString() + "-" + System.currentTimeMillis());
+
+            boolean renamingOutputDirectory = fileSystem.rename(actualFilePath, newDestination);
+
+            if (renamingOutputDirectory) {
+                LOG.info("Successful to move {} to {}.", actualFilePath, newDestination);
+            } else {
+                LOG.info("Failed to move {} to {}.", actualFilePath, newDestination);
+            }
         }
 
         @Override

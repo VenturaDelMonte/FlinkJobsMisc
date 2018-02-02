@@ -54,7 +54,7 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
     @Override
     public DataStream<Tuple2<Timestamp, String>> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment) {
 
-        TypeInformation<Tuple2<Timestamp, String>> info = TypeInformation.of(new TypeHint<Tuple2<Timestamp, String>>(){});
+        TypeInformation<Tuple2<Timestamp, String>> info = TypeInformation.of(new TypeHint<Tuple2<Timestamp, String>>() {});
 
         return new DataStreamSource<>(executionEnvironment,
                 info,
@@ -75,11 +75,6 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
         private static final long serialVersionUID = 1L;
 
         /**
-         * Default delay between successive connection attempts.
-         */
-        private static final int DEFAULT_CONNECTION_RETRY_SLEEP = 500;
-
-        /**
          * Default connection timeout when connecting to the server socket (infinite).
          */
         private static final int CONNECTION_TIMEOUT_TIME = 0;
@@ -88,13 +83,11 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
         private final List<String> hostnames;
         private final List<Integer> ports;
         private final String delimiter = "\n";
-        private final long maxNumRetries;
-        private final long delayBetweenRetries;
 
         private boolean restored;
         private String hostname;
         private int port;
-        private long numberProcessedMessages = 0;
+        private long numberProcessedMessages;
 
         private ListState<String> listStateHostnames;
         private ListState<Integer> listStatePorts;
@@ -107,8 +100,6 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
         public SocketTextStreamFunction(List<String> hostnames, List<Integer> ports) {
             this.hostnames = checkNotNull(hostnames, "Hostnames must not be null");
             this.ports = checkNotNull(ports, "Ports must not be null");
-            this.maxNumRetries = 5;
-            this.delayBetweenRetries = DEFAULT_CONNECTION_RETRY_SLEEP;
 
             for (Integer port : ports) {
                 checkArgument(port > 0 && port < 65536, "ports is out of range");
@@ -118,65 +109,54 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
         @Override
         public void run(SourceContext<Tuple2<Timestamp, String>> ctx) throws Exception {
             final StringBuilder buffer = new StringBuilder();
-            long attempt = 0;
 
             checkArgument(hostnames.size() == getRuntimeContext().getNumberOfParallelSubtasks(),
                     "Number of hostnames does not match degree of parallelism");
 
-            while (isRunning) {
+            try (Socket socket = new Socket()) {
+                currentSocket = socket;
 
-                try (Socket socket = new Socket()) {
-                    currentSocket = socket;
+                hostname = chooseHostname();
+                port = choosePort();
+                numberProcessedMessages = restoreProcessedMessages();
 
-                    hostname = chooseHostname();
-                    port = choosePort();
+                LOG.info("Connecting to server socket {}:{} with current number of messages {}",
+                        hostname, port, numberProcessedMessages);
 
-                    LOG.info("Connecting to server socket {}:{} with current number of messages {}",
-                            hostname, port, numberProcessedMessages);
+                socket.connect(new InetSocketAddress(hostname, port), CONNECTION_TIMEOUT_TIME);
 
-                    socket.connect(new InetSocketAddress(hostname, port), CONNECTION_TIMEOUT_TIME);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                PrintStream output = new PrintStream(socket.getOutputStream(), true);
 
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    PrintStream output = new PrintStream(socket.getOutputStream(), true);
+                // Necessary, so port stays open after disconnect
+                output.print("from:" + numberProcessedMessages + ":reconnect\n");
 
-                    // Necessary, so port stays open after disconnect
-                    output.print("from:" + numberProcessedMessages + ":reconnect\n");
+                char[] cbuf = new char[8192];
+                int bytesRead;
+                while (isRunning && (bytesRead = reader.read(cbuf)) != -1) {
+                    buffer.append(cbuf, 0, bytesRead);
+                    int delimPos;
+                    while (buffer.length() >= delimiter.length() && (delimPos = buffer.indexOf(delimiter)) != -1) {
+                        String record = buffer.substring(0, delimPos);
+                        // truncate trailing carriage return
+                        if (record.endsWith("\r")) {
+                            record = record.substring(0, record.length() - 1);
+                        }
 
-                    char[] cbuf = new char[8192];
-                    int bytesRead;
-                    while (isRunning && (bytesRead = reader.read(cbuf)) != -1) {
-                        buffer.append(cbuf, 0, bytesRead);
-                        int delimPos;
-                        while (buffer.length() >= delimiter.length() && (delimPos = buffer.indexOf(delimiter)) != -1) {
-                            String record = buffer.substring(0, delimPos);
-                            // truncate trailing carriage return
-                            if (delimiter.equals("\n") && record.endsWith("\r")) {
-                                record = record.substring(0, record.length() - 1);
+                        synchronized (ctx.getCheckpointLock()) {
+
+                            if (!isRunning) {
+                                return;
                             }
-                            ctx.collect(objectToRecord(record));
-                            buffer.delete(0, delimPos + delimiter.length());
+
+                            Tuple2<Timestamp, String> tuple = objectToRecord(record);
+                            ctx.collect(tuple);
                             numberProcessedMessages++;
                         }
+
+                        buffer.delete(0, delimPos + delimiter.length());
                     }
                 }
-
-                // if we dropped out of this loop due to an EOF, sleep and retry
-                if (isRunning) {
-                    attempt++;
-                    if (maxNumRetries == -1 || attempt < maxNumRetries) {
-                        LOG.warn("Lost connection to server socket. Retrying in " + delayBetweenRetries + " msecs...");
-                        Thread.sleep(delayBetweenRetries);
-                    } else {
-                        // this should probably be here, but some examples expect simple exists of the stream source
-                        // throw new EOFException("Reached end of stream and reconnects are not enabled.");
-                        break;
-                    }
-                }
-            }
-
-            // collect trailing data
-            if (buffer.length() > 0) {
-                ctx.collect(objectToRecord(buffer.toString()));
             }
         }
 
@@ -222,6 +202,29 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
             return localPort;
         }
 
+        private long restoreProcessedMessages() throws Exception {
+            if (!restored) {
+                return 0;
+            } else {
+
+                long messages = -1;
+
+                for (Long numberOfMessages : listStateNumberOfProcessedRecords.get()) {
+                    if (messages == -1) {
+                        messages = numberOfMessages;
+                    } else {
+                        throw new IllegalStateException("Multiple number of processed records");
+                    }
+                }
+
+                if (messages == -1) {
+                    throw new IllegalStateException("Not old number of messages could be restored");
+                }
+
+                return messages;
+            }
+        }
+
         @Override
         public void cancel() {
             isRunning = false;
@@ -236,17 +239,17 @@ public class ParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Strin
 
         @Override
         public void snapshotState(FunctionSnapshotContext context) throws Exception {
-            if (!isRunning) {
-                LOG.info("snapshotState() called on closed ParallelSocketSource");
-            } else {
-                listStateHostnames.clear();
-                listStatePorts.clear();
-                listStateNumberOfProcessedRecords.clear();
 
-                listStateHostnames.add(hostname);
-                listStatePorts.add(port);
-                listStateNumberOfProcessedRecords.add(numberProcessedMessages);
-            }
+            LOG.debug("Taking checkpoint of source {} of host {} on port {} with messages {} and is running? {}",
+                    getRuntimeContext().getIndexOfThisSubtask(), hostname, port, numberProcessedMessages, isRunning);
+
+            listStateHostnames.clear();
+            listStatePorts.clear();
+            listStateNumberOfProcessedRecords.clear();
+
+            listStateHostnames.add(hostname);
+            listStatePorts.add(port);
+            listStateNumberOfProcessedRecords.add(numberProcessedMessages);
         }
 
         @Override

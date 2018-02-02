@@ -14,12 +14,16 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
 import org.apache.flink.streaming.api.operators.StreamSource;
 import org.apache.flink.util.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class IntervalSequenceSource extends AbstractSource<Long> implements Serializable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(IntervalSequenceSource.class);
 
     private static final String OPERATOR_NAME = "StatefulIntervalSequenceSource";
 
@@ -148,7 +152,14 @@ public class IntervalSequenceSource extends AbstractSource<Long> implements Seri
         public void run(SourceContext<Long> ctx) throws Exception {
             while (isRunning && !this.valuesToEmit.isEmpty()) {
                 synchronized (ctx.getCheckpointLock()) {
-                    ctx.collect(this.valuesToEmit.poll());
+
+                    if (!isRunning) {
+                        return;
+                    }
+
+                    Long record = this.valuesToEmit.poll();
+                    ctx.collect(record);
+                    LOG.debug("Source {} Emitting: {}", getRuntimeContext().getIndexOfThisSubtask(), record);
                 }
 
                 Thread.sleep(pauseDuration);

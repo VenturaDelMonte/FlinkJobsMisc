@@ -4,6 +4,8 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,18 +44,18 @@ public class CountingMap<Input> extends AbstractOperator<Input, String> {
         }
 
         @Override
-        public String map(INPUT value) throws Exception {
+        public String map(INPUT value) {
             numberOfProcessedElements++;
             return value + " - " + taskNameWithSubtasks + " - " + numberOfProcessedElements;
         }
 
         @Override
-        public List<Long> snapshotState(long checkpointId, long timestamp) throws Exception {
+        public List<Long> snapshotState(long checkpointId, long timestamp) {
             return Collections.singletonList(numberOfProcessedElements);
         }
 
         @Override
-        public void restoreState(List<Long> state) throws Exception {
+        public void restoreState(List<Long> state) {
             for (Long number : state) {
                 numberOfProcessedElements += number;
             }

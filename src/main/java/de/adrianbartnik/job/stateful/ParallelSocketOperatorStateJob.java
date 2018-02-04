@@ -3,7 +3,8 @@ package de.adrianbartnik.job.stateful;
 import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.operator.CountingTupleMap;
 import de.adrianbartnik.sink.LatencySink;
-import de.adrianbartnik.source.ParallelSocketSource;
+import de.adrianbartnik.source.GenericParallelSocketSource;
+import de.adrianbartnik.source.socketfunctions.TimestampNumberSocketSocketFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -52,8 +53,10 @@ public class ParallelSocketOperatorStateJob {
         FlinkJobFactory<Tuple2<Timestamp, String>, Tuple4<Timestamp, String, String, Long>> creator =
                 new FlinkJobFactory<>(args, false, true);
 
+        TimestampNumberSocketSocketFunction function = new TimestampNumberSocketSocketFunction(hostnames, ports);
+
         StreamExecutionEnvironment job =
-                creator.createJob(new ParallelSocketSource(hostnames, ports, sourceParallelism),
+                creator.createJob(new GenericParallelSocketSource<>(function, sourceParallelism),
                         new CountingTupleMap(mapParallelism),
                         new LatencySink(sinkParallelism, output_path));
 

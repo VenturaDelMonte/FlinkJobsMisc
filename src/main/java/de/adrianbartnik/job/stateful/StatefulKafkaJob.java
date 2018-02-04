@@ -17,8 +17,8 @@ public class StatefulKafkaJob {
 
         StreamExecutionEnvironment job =
                 creator.createJob(new KafkaSource(4),
-                        new CountingMap<String>(6),
-                        new TextOutputSink<String>(2));
+                        new CountingMap<>(6),
+                        new TextOutputSink<>(2));
 
         job.execute(JOB_NAME);
     }

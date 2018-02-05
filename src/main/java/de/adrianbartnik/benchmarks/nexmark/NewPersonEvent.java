@@ -18,6 +18,7 @@ public class NewPersonEvent implements Serializable {
     private final String zipcode;
     private final String homepage;
     private final String creditcard;
+    private final long ingestionTimestamp;
 
     public NewPersonEvent(long timestamp,
                           int personId,
@@ -39,6 +40,7 @@ public class NewPersonEvent implements Serializable {
         this.province = province;
         this.zipcode = zipcode;
         this.homepage = homepage;
+        this.ingestionTimestamp = System.currentTimeMillis();
     }
 
     public String getName() {
@@ -79,5 +81,9 @@ public class NewPersonEvent implements Serializable {
 
     public String getHomepage() {
         return homepage;
+    }
+
+    public long getIngestionTimestamp() {
+        return ingestionTimestamp;
     }
 }

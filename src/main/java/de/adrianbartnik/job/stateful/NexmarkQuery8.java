@@ -3,22 +3,17 @@ package de.adrianbartnik.job.stateful;
 import de.adrianbartnik.benchmarks.nexmark.AuctionEvent;
 import de.adrianbartnik.benchmarks.nexmark.NewPersonEvent;
 import de.adrianbartnik.factory.FlinkJobFactory;
-import de.adrianbartnik.operator.CountingTupleMap;
+import de.adrianbartnik.job.timestampextractor.AuctionEventTimestampExtractor;
+import de.adrianbartnik.job.timestampextractor.PersonEventTimestampExtractor;
 import de.adrianbartnik.operator.JoiningNewUsersWithAuctionsFunction;
-import de.adrianbartnik.sink.LatencySink;
-import de.adrianbartnik.source.GenericParallelSocketSource;
-import de.adrianbartnik.source.socketfunctions.AuctionSocketSourceFunction;
-import de.adrianbartnik.source.socketfunctions.PersonSocketSourceFunction;
-import de.adrianbartnik.source.socketfunctions.TimestampNumberSocketSocketFunction;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple4;
+import de.adrianbartnik.source.socket.AuctionParallelSocketSource;
+import de.adrianbartnik.source.socket.PersonParallelSocketSource;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.mortbay.log.Log;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -58,14 +53,14 @@ public class NexmarkQuery8 {
         StreamExecutionEnvironment streamExecutionEnvironment =
                 new FlinkJobFactory(args, false, true).setupExecutionEnvironment();
 
-        AuctionSocketSourceFunction auctionFunction = new AuctionSocketSourceFunction(hostnames, ports);
-        GenericParallelSocketSource<AuctionEvent> auctionSource = new GenericParallelSocketSource<>(auctionFunction, sourceParallelism);
+        AuctionParallelSocketSource auctionSource = new AuctionParallelSocketSource(hostnames, ports, sourceParallelism);
 
-        PersonSocketSourceFunction personFunction = new PersonSocketSourceFunction(hostnames, ports);
-        GenericParallelSocketSource<NewPersonEvent> personSource = new GenericParallelSocketSource<>(personFunction, sourceParallelism);
+        PersonParallelSocketSource personSource = new PersonParallelSocketSource(hostnames, ports, sourceParallelism);
 
         personSource.createSource(args, streamExecutionEnvironment)
-                .join(auctionSource.createSource(args, streamExecutionEnvironment))
+                .assignTimestampsAndWatermarks(new PersonEventTimestampExtractor())
+                .join(auctionSource.createSource(args, streamExecutionEnvironment)
+                        .assignTimestampsAndWatermarks(new AuctionEventTimestampExtractor()))
                 .where(NewPersonEvent::getPersonId).equalTo(AuctionEvent::getPersonId)
                 .window(TumblingEventTimeWindows.of(Time.minutes(1)))
                 .apply(new JoiningNewUsersWithAuctionsFunction())

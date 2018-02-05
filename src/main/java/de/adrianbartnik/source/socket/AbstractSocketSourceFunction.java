@@ -1,11 +1,10 @@
-package de.adrianbartnik.source.socketfunctions;
+package de.adrianbartnik.source.socket;
 
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.api.common.functions.StoppableFunction;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.state.OperatorStateStore;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.runtime.state.FunctionInitializationContext;
 import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.shaded.com.google.common.collect.Iterables;
@@ -125,8 +124,6 @@ public abstract class AbstractSocketSourceFunction<R> extends RichParallelSource
     }
 
     protected abstract R stringToRecord(String record);
-
-    public abstract TypeInformation<R> getTypeInfo();
 
     protected abstract String getStartCommand();
 

@@ -12,6 +12,7 @@ public class AuctionEvent implements Serializable {
     private final long start;
     private final long end;
     private final long categoryId;
+    private final long ingestionTimestamp;
 
     public AuctionEvent(long timestamp, int auctionId, int itemId, int personId, double initialPrice, long categoryID, long start, long end) {
         this.timestamp = timestamp;
@@ -22,6 +23,7 @@ public class AuctionEvent implements Serializable {
         this.categoryId = categoryID;
         this.start = start;
         this.end = end;
+        this.ingestionTimestamp = System.currentTimeMillis();
     }
 
     public Long getTimestamp() {
@@ -54,5 +56,9 @@ public class AuctionEvent implements Serializable {
 
     public long getCategoryId() {
         return categoryId;
+    }
+
+    public long getIngestionTimestamp() {
+        return ingestionTimestamp;
     }
 }

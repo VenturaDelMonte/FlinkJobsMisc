@@ -33,4 +33,9 @@ public class TimestampNumberSocketSocketFunction extends AbstractSocketSourceFun
     public TypeInformation<Tuple2<Timestamp, String>> getTypeInfo() {
         return TypeInformation.of(new TypeHint<Tuple2<Timestamp, String>>() {});
     }
+
+    @Override
+    protected String getStartCommand() {
+        return "from:" + numberProcessedMessages + ":reconnect\n";
+    }
 }

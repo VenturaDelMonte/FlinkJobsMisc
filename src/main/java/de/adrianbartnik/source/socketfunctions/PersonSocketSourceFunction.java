@@ -32,4 +32,9 @@ public class PersonSocketSourceFunction extends AbstractSocketSourceFunction<New
     public TypeInformation<NewPersonEvent> getTypeInfo() {
         return TypeInformation.of(new TypeHint<NewPersonEvent>() {});
     }
+
+    @Override
+    protected String getStartCommand() {
+        return "persons\n";
+    }
 }

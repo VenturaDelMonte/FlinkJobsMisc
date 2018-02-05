@@ -51,7 +51,7 @@ public abstract class AbstractSocketSourceFunction<R> extends RichParallelSource
     private boolean restored;
     private String hostname;
     private int port;
-    private long numberProcessedMessages;
+    long numberProcessedMessages;
 
     private ListState<String> listStateHostnames;
     private ListState<Integer> listStatePorts;
@@ -93,7 +93,7 @@ public abstract class AbstractSocketSourceFunction<R> extends RichParallelSource
             PrintStream output = new PrintStream(socket.getOutputStream(), true);
 
             // Necessary, so port stays open after disconnect
-            output.print("from:" + numberProcessedMessages + ":reconnect\n");
+            output.print(getStartCommand());
 
             char[] cbuf = new char[8192];
             int bytesRead;
@@ -127,6 +127,8 @@ public abstract class AbstractSocketSourceFunction<R> extends RichParallelSource
     protected abstract R stringToRecord(String record);
 
     public abstract TypeInformation<R> getTypeInfo();
+
+    protected abstract String getStartCommand();
 
     private String chooseHostname() throws Exception {
         String localHostname = hostnames.get(getRuntimeContext().getIndexOfThisSubtask()), remoteHostname = "";

@@ -33,4 +33,9 @@ public class AuctionSocketSourceFunction extends AbstractSocketSourceFunction<Au
     public TypeInformation<AuctionEvent> getTypeInfo() {
         return TypeInformation.of(new TypeHint<AuctionEvent>() {});
     }
+
+    @Override
+    protected String getStartCommand() {
+        return "auctions\n";
+    }
 }

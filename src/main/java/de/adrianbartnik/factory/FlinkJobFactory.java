@@ -28,8 +28,6 @@ public class FlinkJobFactory<INPUT, OUTPUT> {
                                                 AbstractSink<OUTPUT> sinkCreator) {
         StreamExecutionEnvironment executionEnvironment = setupExecutionEnvironment();
 
-        executionEnvironment.setRestartStrategy(new RestartStrategies.NoRestartStrategyConfiguration());
-
         DataStream<INPUT> source = sourceCreator.createSource(arguments, executionEnvironment);
 
         DataStream<OUTPUT> stream = jobCreator.createOperator(arguments, source);
@@ -38,8 +36,10 @@ public class FlinkJobFactory<INPUT, OUTPUT> {
         return executionEnvironment;
     }
 
-    StreamExecutionEnvironment setupExecutionEnvironment() {
+    public StreamExecutionEnvironment setupExecutionEnvironment() {
         StreamExecutionEnvironment executionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        executionEnvironment.setRestartStrategy(new RestartStrategies.NoRestartStrategyConfiguration());
 
         if (!chaining) {
             executionEnvironment.disableOperatorChaining();

@@ -6,6 +6,9 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 
 import java.util.List;
 
+/**
+ * Schema: timestamp,auction_id,item_id,seller_id,category_id,quantity,type,start,end
+ */
 public class AuctionSocketSourceFunction extends AbstractSocketSourceFunction<AuctionEvent> {
 
     public AuctionSocketSourceFunction(List<String> hostnames, List<Integer> ports) {
@@ -14,7 +17,16 @@ public class AuctionSocketSourceFunction extends AbstractSocketSourceFunction<Au
 
     @Override
     protected AuctionEvent stringToRecord(String record) {
-        return new AuctionEvent();
+        String[] split = record.split(",");
+        return new AuctionEvent(
+                Long.valueOf(split[0]),
+                Integer.valueOf(split[1]),
+                Integer.valueOf(split[2]),
+                Integer.valueOf(split[3]),
+                Double.valueOf(split[4]),
+                Long.valueOf(split[5]),
+                Long.valueOf(split[6]),
+                Long.valueOf(split[7]));
     }
 
     @Override

@@ -1,14 +1,17 @@
 package de.adrianbartnik.job.stateful;
 
-import de.adrianbartnik.benchmarks.nexmark.AuctionEvent;
-import de.adrianbartnik.benchmarks.nexmark.NewPersonEvent;
+import de.adrianbartnik.data.nexmark.AuctionEvent;
+import de.adrianbartnik.data.nexmark.NewPersonEvent;
+import de.adrianbartnik.data.nexmark.intermediate.Query8WindowOutput;
 import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.job.timestampextractor.AuctionEventTimestampExtractor;
 import de.adrianbartnik.job.timestampextractor.PersonEventTimestampExtractor;
 import de.adrianbartnik.operator.JoiningNewUsersWithAuctionsCoGroupFunction;
+import de.adrianbartnik.sink.latency.WindowLatencySink;
 import de.adrianbartnik.source.socket.AuctionParallelSocketSource;
 import de.adrianbartnik.source.socket.PersonParallelSocketSource;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -59,15 +62,17 @@ public class NexmarkQuery8 {
 
         PersonParallelSocketSource personSource = new PersonParallelSocketSource(hostnames, ports, sourceParallelism);
 
-        personSource.createSource(args, streamExecutionEnvironment)
-                .assignTimestampsAndWatermarks(new PersonEventTimestampExtractor())
-                .coGroup(auctionSource.createSource(args, streamExecutionEnvironment)
-                        .assignTimestampsAndWatermarks(new AuctionEventTimestampExtractor()))
-                .where(NewPersonEvent::getPersonId).equalTo(AuctionEvent::getPersonId)
-                .window(TumblingEventTimeWindows.of(Time.minutes(1)))
-                .with(new JoiningNewUsersWithAuctionsCoGroupFunction())
-                .setParallelism(windowParallelism)
-                .writeAsCsv(output_path);
+        SingleOutputStreamOperator<Query8WindowOutput> job =
+                personSource.createSource(args, streamExecutionEnvironment)
+                        .assignTimestampsAndWatermarks(new PersonEventTimestampExtractor())
+                        .coGroup(auctionSource.createSource(args, streamExecutionEnvironment)
+                                .assignTimestampsAndWatermarks(new AuctionEventTimestampExtractor()))
+                        .where(NewPersonEvent::getPersonId).equalTo(AuctionEvent::getPersonId)
+                        .window(TumblingEventTimeWindows.of(Time.minutes(1)))
+                        .with(new JoiningNewUsersWithAuctionsCoGroupFunction())
+                        .setParallelism(windowParallelism);
+
+        new WindowLatencySink(sinkParallelism, output_path).createSink(args, job);
 
         streamExecutionEnvironment.execute(JOB_NAME);
     }

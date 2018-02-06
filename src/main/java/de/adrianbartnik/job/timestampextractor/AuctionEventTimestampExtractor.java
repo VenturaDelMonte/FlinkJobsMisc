@@ -1,7 +1,6 @@
 package de.adrianbartnik.job.timestampextractor;
 
-import de.adrianbartnik.benchmarks.nexmark.AuctionEvent;
-import de.adrianbartnik.benchmarks.nexmark.NewPersonEvent;
+import de.adrianbartnik.data.nexmark.AuctionEvent;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 
 public class AuctionEventTimestampExtractor extends AscendingTimestampExtractor<AuctionEvent> {

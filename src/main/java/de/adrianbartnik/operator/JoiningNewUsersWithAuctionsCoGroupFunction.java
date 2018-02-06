@@ -1,14 +1,14 @@
 package de.adrianbartnik.operator;
 
-import de.adrianbartnik.benchmarks.nexmark.AuctionEvent;
-import de.adrianbartnik.benchmarks.nexmark.NewPersonEvent;
+import de.adrianbartnik.data.nexmark.AuctionEvent;
+import de.adrianbartnik.data.nexmark.NewPersonEvent;
+import de.adrianbartnik.data.nexmark.intermediate.Query8WindowOutput;
 import org.apache.flink.api.common.functions.RichCoGroupFunction;
-import org.apache.flink.api.java.tuple.Tuple6;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunction<NewPersonEvent, AuctionEvent, Tuple6<Long, Long, Long, Long, Long, String>> {
+public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunction<NewPersonEvent, AuctionEvent, Query8WindowOutput> {
 
     private static final Logger LOG = LoggerFactory.getLogger(JoiningNewUsersWithAuctionsCoGroupFunction.class);
 
@@ -19,7 +19,7 @@ public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunct
     @Override
     public void coGroup(Iterable<NewPersonEvent> persons,
                         Iterable<AuctionEvent> auctions,
-                        Collector<Tuple6<Long, Long, Long, Long, Long, String>> out) {
+                        Collector<Query8WindowOutput> out) {
 
         LOG.debug("{} was called with {} and {}", this.getClass(), persons, auctions);
 
@@ -42,7 +42,7 @@ public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunct
                 Long auctionCreationTimestamp = auction.getTimestamp();
                 Long auctionIngestionTimestamp = auction.getIngestionTimestamp();
 
-                out.collect(new Tuple6<>(
+                out.collect(new Query8WindowOutput(
                         personCreationTimestamp,
                         personIngestionTimestamp,
                         auctionCreationTimestamp,

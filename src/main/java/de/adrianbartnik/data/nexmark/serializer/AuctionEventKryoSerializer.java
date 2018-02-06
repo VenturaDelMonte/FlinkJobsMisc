@@ -1,9 +1,9 @@
-package de.adrianbartnik.benchmarks.nexmark.serializer;
+package de.adrianbartnik.data.nexmark.serializer;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import de.adrianbartnik.benchmarks.nexmark.AuctionEvent;
+import de.adrianbartnik.data.nexmark.AuctionEvent;
 
 /**
  * We need another set of Kryo Serializers for the Benchmark Events for Flink-internal serialization. In Flink, we need to maintain the

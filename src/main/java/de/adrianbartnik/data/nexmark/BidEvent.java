@@ -1,4 +1,4 @@
-package de.adrianbartnik.benchmarks.nexmark;
+package de.adrianbartnik.data.nexmark;
 
 import java.io.Serializable;
 

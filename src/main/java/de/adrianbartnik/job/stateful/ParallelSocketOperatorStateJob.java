@@ -2,7 +2,7 @@ package de.adrianbartnik.job.stateful;
 
 import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.operator.CountingTupleMap;
-import de.adrianbartnik.sink.LatencySink;
+import de.adrianbartnik.sink.latency.LatencySink;
 import de.adrianbartnik.source.socket.TimestampedNumberParallelSocketSource;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;

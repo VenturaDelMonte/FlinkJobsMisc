@@ -3,29 +3,29 @@ package de.adrianbartnik.operator;
 import de.adrianbartnik.benchmarks.nexmark.AuctionEvent;
 import de.adrianbartnik.benchmarks.nexmark.NewPersonEvent;
 import org.apache.flink.api.common.functions.RichJoinFunction;
-import org.apache.flink.api.java.tuple.Tuple5;
+import org.apache.flink.api.java.tuple.Tuple6;
 
-public class JoiningNewUsersWithAuctionsFunction extends RichJoinFunction<NewPersonEvent, AuctionEvent, Tuple5<Long, Integer, String, Long, Integer>> {
+public class JoiningNewUsersWithAuctionsFunction extends RichJoinFunction<NewPersonEvent, AuctionEvent, Tuple6<Long, Long, Long, Long, Long, String>> {
+
+
 
     /**
-     * Join Auction and Person on name and return the Persons name as well as ID. Finding every person that opened an auction in the last x minutes
+     * Join Auction and Person on person id and return the Persons name as well as ID.
+     * Finding every person that created a new auction.
      */
     @Override
-    public Tuple5<Long, Integer, String, Long, Integer> join(NewPersonEvent person, AuctionEvent auction) {
+    public Tuple6<Long, Long, Long, Long, Long, String> join(NewPersonEvent person, AuctionEvent auction) {
 
-        Long latencyTimestamp;
+        Long personCreationTimestamp = person.getTimestamp();
+        Long personIngestionTimestamp = person.getIngestionTimestamp();
 
-        if (auction.getIngestionTimestamp() > person.getIngestionTimestamp()) {
-            latencyTimestamp = auction.getIngestionTimestamp();
-        } else {
-            latencyTimestamp = person.getIngestionTimestamp();
-        }
+        Long auctionCreationTimestamp = person.getTimestamp();
+        Long auctionIngestionTimestamp = person.getIngestionTimestamp();
 
-        Integer person_id = person.getPersonId();
-        String person_name = person.getName();
-        Long timestamp = System.currentTimeMillis();
+        long personId = person.getPersonId();
+        String personName = person.getName();
 
-        return new Tuple5<>(timestamp, person_id, person_name, latencyTimestamp, 2);
+        return new Tuple6<>(personCreationTimestamp, personIngestionTimestamp, auctionCreationTimestamp, auctionIngestionTimestamp, personId, personName);
     }
 }
 

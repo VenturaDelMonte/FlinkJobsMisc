@@ -5,7 +5,7 @@ import de.adrianbartnik.benchmarks.nexmark.NewPersonEvent;
 import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.job.timestampextractor.AuctionEventTimestampExtractor;
 import de.adrianbartnik.job.timestampextractor.PersonEventTimestampExtractor;
-import de.adrianbartnik.operator.JoiningNewUsersWithAuctionsFunction;
+import de.adrianbartnik.operator.JoiningNewUsersWithAuctionsCoGroupFunction;
 import de.adrianbartnik.source.socket.AuctionParallelSocketSource;
 import de.adrianbartnik.source.socket.PersonParallelSocketSource;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -27,7 +27,9 @@ public class NexmarkQuery8 {
         final ParameterTool params = ParameterTool.fromArgs(args);
         final String hostnames_string = params.get("hostnames");
         final String ports_string = params.get("ports");
-        final String output_path = params.get("path", "benchmarkOutput");
+        final int windowParallelism = params.getInt("windowParallelism", 3);
+        final int sinkParallelism = params.getInt("sinkParallelism", 2);
+        final String output_path = params.get("path", "query8Output");
 
         if (hostnames_string == null || hostnames_string.isEmpty() || ports_string == null || ports_string.isEmpty()) {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");
@@ -59,12 +61,13 @@ public class NexmarkQuery8 {
 
         personSource.createSource(args, streamExecutionEnvironment)
                 .assignTimestampsAndWatermarks(new PersonEventTimestampExtractor())
-                .join(auctionSource.createSource(args, streamExecutionEnvironment)
+                .coGroup(auctionSource.createSource(args, streamExecutionEnvironment)
                         .assignTimestampsAndWatermarks(new AuctionEventTimestampExtractor()))
                 .where(NewPersonEvent::getPersonId).equalTo(AuctionEvent::getPersonId)
                 .window(TumblingEventTimeWindows.of(Time.minutes(1)))
-                .apply(new JoiningNewUsersWithAuctionsFunction())
-                .print();
+                .with(new JoiningNewUsersWithAuctionsCoGroupFunction())
+                .setParallelism(windowParallelism)
+                .writeAsCsv(output_path);
 
         streamExecutionEnvironment.execute(JOB_NAME);
     }

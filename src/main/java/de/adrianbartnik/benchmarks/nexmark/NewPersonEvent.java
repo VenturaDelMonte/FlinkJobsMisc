@@ -1,27 +1,38 @@
 package de.adrianbartnik.benchmarks.nexmark;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 
 /**
  * Schema: timestamp,person_id,name,email_address,phone,street,city,country,province,zipcode,homepage,creditcard
+ *
+ * Class needs public field with default, no-argument constructor to be serializable.
  */
 public class NewPersonEvent implements Serializable {
 
-    private final long timestamp;
-    private final int personId;
-    private final String name;
-    private final String email;
-    private final String city;
-    private final String country;
-    private final String province;
-    private final String zipcode;
-    private final String homepage;
-    private final String creditcard;
-    private final long ingestionTimestamp;
+    private static final Logger LOG = LoggerFactory.getLogger(NewPersonEvent.class);
+
+    public long timestamp;
+    public long personId;
+    public String name;
+    public String email;
+    public String city;
+    public String country;
+    public String province;
+    public String zipcode;
+    public String homepage;
+    public String creditcard;
+    public long ingestionTimestamp;
+
+    public NewPersonEvent() {
+        LOG.debug("Created person event with default constructor");
+    }
 
     public NewPersonEvent(long timestamp,
-                          int personId,
+                          long personId,
                           String name,
                           String email,
                           String city,
@@ -30,6 +41,21 @@ public class NewPersonEvent implements Serializable {
                           String zipcode,
                           String homepage,
                           String creditcard) {
+        this(timestamp, personId, name, email, city, country, province, zipcode, homepage, creditcard, System.currentTimeMillis());
+    }
+
+    public NewPersonEvent(long timestamp,
+                          long personId,
+                          String name,
+                          String email,
+                          String city,
+                          String country,
+                          String province,
+                          String zipcode,
+                          String homepage,
+                          String creditcard,
+                          long ingestionTimestamp) {
+        LOG.debug("Created person event with id {} and name {}", personId, name);
         this.timestamp = timestamp;
         this.personId = personId;
         this.email = email;
@@ -40,7 +66,7 @@ public class NewPersonEvent implements Serializable {
         this.province = province;
         this.zipcode = zipcode;
         this.homepage = homepage;
-        this.ingestionTimestamp = System.currentTimeMillis();
+        this.ingestionTimestamp = ingestionTimestamp;
     }
 
     public String getName() {
@@ -51,7 +77,7 @@ public class NewPersonEvent implements Serializable {
         return timestamp;
     }
 
-    public Integer getPersonId() {
+    public long getPersonId() {
         return personId;
     }
 

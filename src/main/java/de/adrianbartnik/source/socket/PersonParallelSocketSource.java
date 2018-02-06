@@ -1,6 +1,7 @@
 package de.adrianbartnik.source.socket;
 
 import de.adrianbartnik.benchmarks.nexmark.NewPersonEvent;
+import de.adrianbartnik.operator.JoiningNewUsersWithAuctionsCoGroupFunction;
 import de.adrianbartnik.source.AbstractSource;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -8,6 +9,8 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.operators.StreamSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.List;
@@ -51,7 +54,7 @@ public class PersonParallelSocketSource extends AbstractSource<NewPersonEvent> i
             String[] split = record.split(",");
             return new NewPersonEvent(
                     Long.valueOf(split[0]),
-                    Integer.valueOf(split[1]),
+                    Long.valueOf(split[1]),
                     split[2],
                     split[3],
                     split[4],

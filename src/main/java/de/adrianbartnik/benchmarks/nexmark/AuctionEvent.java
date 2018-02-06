@@ -1,20 +1,39 @@
 package de.adrianbartnik.benchmarks.nexmark;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 
+/**
+ * Class needs public field with default, no-argument constructor to be serializable.
+ */
 public class AuctionEvent implements Serializable {
 
-    private final long timestamp;
-    private final int auctionId;
-    private final int personId;
-    private final int itemId;
-    private final double initialPrice;
-    private final long start;
-    private final long end;
-    private final long categoryId;
-    private final long ingestionTimestamp;
+    private static final Logger LOG = LoggerFactory.getLogger(AuctionEvent.class);
 
-    public AuctionEvent(long timestamp, int auctionId, int itemId, int personId, double initialPrice, long categoryID, long start, long end) {
+
+    public long timestamp;
+    public long auctionId;
+    public long personId;
+    public long itemId;
+    public double initialPrice;
+    public long start;
+    public long end;
+    public long categoryId;
+    public long ingestionTimestamp;
+
+    public AuctionEvent() {
+        LOG.debug("Created person event with default constructor");
+    }
+
+    public AuctionEvent(long timestamp, long auctionId, long itemId, long personId, double initialPrice, long categoryID, long start, long end) {
+        this(timestamp, auctionId, itemId, personId, initialPrice, categoryID, start, end, System.currentTimeMillis());
+    }
+
+    public AuctionEvent(long timestamp, long auctionId, long itemId, long personId, double initialPrice, long categoryID, long start, long end, long ingestionTimestamp) {
+        LOG.debug("Created person event with auctionId {} and personId {}", auctionId, personId);
+
         this.timestamp = timestamp;
         this.auctionId = auctionId;
         this.personId = personId;
@@ -23,22 +42,22 @@ public class AuctionEvent implements Serializable {
         this.categoryId = categoryID;
         this.start = start;
         this.end = end;
-        this.ingestionTimestamp = System.currentTimeMillis();
+        this.ingestionTimestamp = ingestionTimestamp;
     }
 
     public Long getTimestamp() {
         return timestamp;
     }
 
-    public Integer getAuctionId() {
+    public long getAuctionId() {
         return auctionId;
     }
 
-    public Integer getPersonId() {
+    public Long getPersonId() {
         return personId;
     }
 
-    public Integer getItemId() {
+    public long getItemId() {
         return itemId;
     }
 

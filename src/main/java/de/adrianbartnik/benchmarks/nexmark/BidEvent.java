@@ -2,13 +2,19 @@ package de.adrianbartnik.benchmarks.nexmark;
 
 import java.io.Serializable;
 
+/**
+ * Class needs public field with default, no-argument constructor to be serializable.
+ */
 public class BidEvent implements Serializable {
 
-    private long timestamp;
-    private int auctionId;
-    private int personId;
-    private int bidId;
-    private double bid;
+    public long timestamp;
+    public int auctionId;
+    public int personId;
+    public int bidId;
+    public double bid;
+
+    public BidEvent() {
+    }
 
     public BidEvent(long timestamp, int auctionId, int personId, int bidId, double bid) {
         this.timestamp = timestamp;

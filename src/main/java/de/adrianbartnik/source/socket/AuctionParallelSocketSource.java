@@ -9,13 +9,15 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.operators.StreamSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.List;
 
 public class AuctionParallelSocketSource extends AbstractSource<AuctionEvent> implements Serializable {
 
-    private static final String OPERATOR_NAME = "ParallelSocketSource";
+    private static final String OPERATOR_NAME = "AuctionParallelSocketSource";
 
     private final List<String> hostnames;
     private final List<Integer> ports;
@@ -55,9 +57,9 @@ public class AuctionParallelSocketSource extends AbstractSource<AuctionEvent> im
             String[] split = record.split(",");
             return new AuctionEvent(
                     Long.valueOf(split[0]),
-                    Integer.valueOf(split[1]),
-                    Integer.valueOf(split[2]),
-                    Integer.valueOf(split[3]),
+                    Long.valueOf(split[1]),
+                    Long.valueOf(split[2]),
+                    Long.valueOf(split[3]),
                     Double.valueOf(split[4]),
                     Long.valueOf(split[5]),
                     Long.valueOf(split[6]),

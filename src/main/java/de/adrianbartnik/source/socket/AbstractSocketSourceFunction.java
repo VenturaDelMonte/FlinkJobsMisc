@@ -113,7 +113,7 @@ public abstract class AbstractSocketSourceFunction<R> extends RichParallelSource
                         }
 
                         R tuple = stringToRecord(record);
-                        ctx.collect(tuple);
+                        ctx.collect(tuple); // Maybe collect already with timestamp?
                         numberProcessedMessages++;
                     }
 

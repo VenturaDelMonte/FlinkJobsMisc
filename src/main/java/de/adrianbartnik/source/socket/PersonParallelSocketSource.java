@@ -14,7 +14,7 @@ import java.util.List;
 
 public class PersonParallelSocketSource extends AbstractSource<NewPersonEvent> implements Serializable {
 
-    private static final String OPERATOR_NAME = "ParallelSocketSource";
+    private static final String OPERATOR_NAME = "PersonParallelSocketSource";
 
     private final List<String> hostnames;
     private final List<Integer> ports;

@@ -11,17 +11,21 @@ import de.adrianbartnik.sink.latency.WindowLatencySink;
 import de.adrianbartnik.source.socket.AuctionParallelSocketSource;
 import de.adrianbartnik.source.socket.PersonParallelSocketSource;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class NexmarkQuery8 {
+
+    private static final Logger LOG = LoggerFactory.getLogger(NexmarkQuery8.class);
 
     private static final String JOB_NAME = "ParallelSocketOperatorStateJob";
 
@@ -31,6 +35,7 @@ public class NexmarkQuery8 {
         final String hostnames_string = params.get("hostnames");
         final String ports_string = params.get("ports");
         final int windowParallelism = params.getInt("windowParallelism", 3);
+        final int windowDuration = params.getInt("windowDuration", 30);
         final int sinkParallelism = params.getInt("sinkParallelism", 2);
         final String output_path = params.get("path", "query8Output");
 
@@ -52,11 +57,13 @@ public class NexmarkQuery8 {
 
         final int sourceParallelism = hostnames.size();
         for (int i = 0; i < hostnames.size(); i++) {
-            Log.debug("Connecting to socket {}:{}", hostnames.get(i), ports.get(i));
+            LOG.debug("Connecting to socket {}:{}", hostnames.get(i), ports.get(i));
         }
 
         StreamExecutionEnvironment streamExecutionEnvironment =
                 new FlinkJobFactory(args, false, true).setupExecutionEnvironment();
+
+        streamExecutionEnvironment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         AuctionParallelSocketSource auctionSource = new AuctionParallelSocketSource(hostnames, ports, sourceParallelism);
 
@@ -68,7 +75,7 @@ public class NexmarkQuery8 {
                         .coGroup(auctionSource.createSource(args, streamExecutionEnvironment)
                                 .assignTimestampsAndWatermarks(new AuctionEventTimestampExtractor()))
                         .where(NewPersonEvent::getPersonId).equalTo(AuctionEvent::getPersonId)
-                        .window(TumblingEventTimeWindows.of(Time.minutes(1)))
+                        .window(TumblingEventTimeWindows.of(Time.seconds(windowDuration)))
                         .with(new JoiningNewUsersWithAuctionsCoGroupFunction())
                         .setParallelism(windowParallelism);
 

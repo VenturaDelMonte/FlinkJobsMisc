@@ -11,6 +11,9 @@ import de.adrianbartnik.sink.latency.WindowLatencySink;
 import de.adrianbartnik.source.socket.AuctionParallelSocketSource;
 import de.adrianbartnik.source.socket.PersonParallelSocketSource;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.contrib.streaming.state.RocksDBStateBackend;
+import org.apache.flink.runtime.state.filesystem.FsStateBackend;
+import org.apache.flink.runtime.state.memory.MemoryStateBackend;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -38,6 +41,10 @@ public class NexmarkQuery8 {
         final int windowDuration = params.getInt("windowDuration", 30);
         final int sinkParallelism = params.getInt("sinkParallelism", 2);
         final String output_path = params.get("path", "query8Output");
+        final String external_backend = params.get("backend", "memory");
+        final String file_system_backend_path = params.get("fsBackendPath", "hdfs://namenode:40010/flink/checkpoints");
+        final String rocksdb_backend_path = params.get("rocksdbBackendPath", "TODO");
+        final boolean incremental_checkpoints = params.getBoolean("incrementalCheckpoints", false);
 
         if (hostnames_string == null || hostnames_string.isEmpty() || ports_string == null || ports_string.isEmpty()) {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");
@@ -64,6 +71,20 @@ public class NexmarkQuery8 {
                 new FlinkJobFactory(args, false, true).setupExecutionEnvironment();
 
         streamExecutionEnvironment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
+        switch (external_backend) {
+            case "memory":
+                streamExecutionEnvironment.setStateBackend(new MemoryStateBackend());
+                break;
+            case "fs":
+                streamExecutionEnvironment.setStateBackend(new FsStateBackend(file_system_backend_path));
+                break;
+            case "rocksdb":
+                streamExecutionEnvironment.setStateBackend(new RocksDBStateBackend(rocksdb_backend_path, incremental_checkpoints));
+                break;
+            default:
+                throw new IllegalStateException("Unrecognized backend '" + external_backend + "'");
+        }
 
         AuctionParallelSocketSource auctionSource = new AuctionParallelSocketSource(hostnames, ports, sourceParallelism);
 

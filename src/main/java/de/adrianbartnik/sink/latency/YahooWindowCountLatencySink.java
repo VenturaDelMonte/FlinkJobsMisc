@@ -47,9 +47,9 @@ public class YahooWindowCountLatencySink extends AbstractSink<WindowedCount> imp
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
             this.stringBuilder.append(record.count);
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
-            this.stringBuilder.append(record.lastUpdate);
+            this.stringBuilder.append(record.lastUpdate.getTime());
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
-            this.stringBuilder.append(record.timeWindow);
+            this.stringBuilder.append(record.timeWindow.getTime());
 
             return this.stringBuilder;
         }

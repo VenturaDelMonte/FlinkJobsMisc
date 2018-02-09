@@ -8,6 +8,7 @@ import de.adrianbartnik.benchmarks.yahoo.operators.AdTimestampExtractor;
 import de.adrianbartnik.benchmarks.yahoo.operators.EventAndProcessingTimeTrigger;
 import de.adrianbartnik.benchmarks.yahoo.operators.IndependentJoinMapper;
 import de.adrianbartnik.benchmarks.yahoo.operators.StaticJoinMapper;
+import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.sink.latency.YahooWindowCountLatencySink;
 import de.adrianbartnik.source.socket.IndependentYahooEventParallelSocketSource;
 import de.adrianbartnik.source.socket.YahooEventParallelSocketSource;
@@ -38,10 +39,11 @@ public class YahooBenchmark {
     public static void main(String args[]) throws Exception {
 
         final ParameterTool params = ParameterTool.fromArgs(args);
+        final int parallelism = params.getInt("parallelism", 4);
         final int sinkParallelism = params.getInt("sinkParallelism", 2);
         final String hostnames_string = params.get("hostnames");
         final String ports_string = params.get("ports");
-        final String output_path = params.get("path", "benchmarkOutput");
+        final String output_path = params.get("path", "yahooBenchmarkOutput");
 
         if (hostnames_string == null || hostnames_string.isEmpty() || ports_string == null || ports_string.isEmpty()) {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");
@@ -65,7 +67,6 @@ public class YahooBenchmark {
         }
 
         Time windowMillis = Time.milliseconds(params.getLong("windowMillis", 10000));
-        int parallelism = params.getInt("parallelism", 5);
         int numCampaigns = params.getInt("numCampaigns", 100);
         int numberOfTuples = params.getInt("numberOfTuples", 50000);
         int triggerIntervalMs = params.getInt("triggerIntervalMs", 0);
@@ -75,7 +76,10 @@ public class YahooBenchmark {
         Preconditions.checkArgument(parallelism > 0, "Parallelism needs to be tmp positive integer.");
         Preconditions.checkArgument(triggerIntervalMs >= 0, "Trigger interval can't be negative.");
 
-        StreamExecutionEnvironment environment = getExecutionEnvironment(parallelism);
+        StreamExecutionEnvironment environment =
+                new FlinkJobFactory(args, true, true).setupExecutionEnvironment();
+        environment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+        environment.setParallelism(parallelism);
 
         if (params.getBoolean("enableObjectReuse", true)) {
             environment.getConfig().enableObjectReuse();
@@ -98,7 +102,7 @@ public class YahooBenchmark {
             case "uuid":
 
                 windowedEvents =
-                        new YahooEventParallelSocketSource(hostnames, ports, parallelism).createSource(args, environment)
+                        new YahooEventParallelSocketSource(hostnames, ports, sourceParallelism).createSource(args, environment)
                                 .filter(value -> value.eventType.equals("view"))
                                 .map(new IndependentJoinMapper<>())
                                 .assignTimestampsAndWatermarks(new AdTimestampExtractor())
@@ -182,19 +186,5 @@ public class YahooBenchmark {
         }
 
         return campaignAds;
-    }
-
-    /**
-     * Handle configuration of environment here
-     */
-    private static StreamExecutionEnvironment getExecutionEnvironment(int parallelism) {
-        StreamExecutionEnvironment executionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
-        executionEnvironment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-
-        if (parallelism > 0) {
-            executionEnvironment.setParallelism(parallelism);
-        }
-
-        return executionEnvironment;
     }
 }

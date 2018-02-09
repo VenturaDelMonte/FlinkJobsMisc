@@ -24,8 +24,8 @@ public class IndependentOperatorStateJob {
 
         StreamExecutionEnvironment job =
                 creator.createJob(new IntervalSequenceSource(0, maxNumberOfMessages, pauseDuration, sourceParallelism),
-                        new CountingMap<Long>(mapParallelism),
-                        new TextOutputSink<String>(sinkParallelism));
+                        new CountingMap<>(mapParallelism),
+                        new TextOutputSink<>(sinkParallelism));
 
         job.execute(JOB_NAME);
     }

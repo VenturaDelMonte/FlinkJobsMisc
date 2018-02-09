@@ -1,4 +1,4 @@
-package de.adrianbartnik.benchmarks.yahoo;
+package de.adrianbartnik.benchmarks.yahoo.generator;
 
 import de.adrianbartnik.benchmarks.yahoo.objects.CampaignAd;
 import de.adrianbartnik.benchmarks.yahoo.objects.Constants;
@@ -8,12 +8,15 @@ import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunctio
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Flink internal generator for the YahooStreamingBenchmark
+ */
 public class EventGenerator extends RichParallelSourceFunction<Event> {
 
     private final String uuid = UUID.randomUUID().toString(); // used as tmp dummy value for all events, based on ref code
 
-    private static final int adTypeLength = Constants.AD_TYPES.size();
-    private static final int eventTypeLength = Constants.EVENT_TYPES.size();
+    private static final int AD_TYPE_LENGTH = Constants.AD_TYPES.size();
+    private static final int EVENT_TYPE_LENGTH = Constants.EVENT_TYPES.size();
 
     private final CampaignAd[] campaingsArray;
     private final int campaignLength;
@@ -24,7 +27,7 @@ public class EventGenerator extends RichParallelSourceFunction<Event> {
 
     private long currentNumberOfEvents = 0;
 
-    EventGenerator(List<CampaignAd> campaigns, long maxNumberOfEvents, int artificialDelay) {
+    public EventGenerator(List<CampaignAd> campaigns, long maxNumberOfEvents, int artificialDelay) {
         this.campaingsArray = campaigns.toArray(new CampaignAd[campaigns.size()]);
         this.campaignLength = campaigns.size();
         this.maxNumberOfEvents = maxNumberOfEvents;
@@ -47,11 +50,11 @@ public class EventGenerator extends RichParallelSourceFunction<Event> {
                 i = 0;
             }
 
-            if (j >= adTypeLength) {
+            if (j >= AD_TYPE_LENGTH) {
                 j = 0;
             }
 
-            if (k >= eventTypeLength) {
+            if (k >= EVENT_TYPE_LENGTH) {
                 k = 0;
             }
 

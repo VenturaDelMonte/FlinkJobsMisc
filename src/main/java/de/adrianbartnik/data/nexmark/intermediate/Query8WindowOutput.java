@@ -2,6 +2,7 @@ package de.adrianbartnik.data.nexmark.intermediate;
 
 public class Query8WindowOutput {
 
+    private final Long windowEvictingTimestamp;
     private final Long personCreationTimestamp;
     private final Long personIngestionTimestamp;
     private final Long auctionCreationTimestamp;
@@ -9,12 +10,14 @@ public class Query8WindowOutput {
     private final long personId;
     private final String personName;
 
-    public Query8WindowOutput(Long personCreationTimestamp,
+    public Query8WindowOutput(Long windowEvictingTimestamp,
+                              Long personCreationTimestamp,
                               Long personIngestionTimestamp,
                               Long auctionCreationTimestamp,
                               Long auctionIngestionTimestamp,
                               long personId,
                               String personName) {
+        this.windowEvictingTimestamp = windowEvictingTimestamp;
         this.personCreationTimestamp = personCreationTimestamp;
         this.personIngestionTimestamp = personIngestionTimestamp;
         this.auctionCreationTimestamp = auctionCreationTimestamp;
@@ -45,5 +48,9 @@ public class Query8WindowOutput {
 
     public String getPersonName() {
         return personName;
+    }
+
+    public Long getWindowEvictingTimestamp() {
+        return windowEvictingTimestamp;
     }
 }

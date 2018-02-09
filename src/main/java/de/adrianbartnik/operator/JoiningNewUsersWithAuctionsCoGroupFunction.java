@@ -43,6 +43,7 @@ public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunct
                 Long auctionIngestionTimestamp = auction.getIngestionTimestamp();
 
                 out.collect(new Query8WindowOutput(
+                        System.currentTimeMillis(),
                         personCreationTimestamp,
                         personIngestionTimestamp,
                         auctionCreationTimestamp,

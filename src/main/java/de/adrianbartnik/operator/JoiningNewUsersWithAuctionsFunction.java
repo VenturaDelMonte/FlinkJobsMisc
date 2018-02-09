@@ -15,6 +15,8 @@ public class JoiningNewUsersWithAuctionsFunction extends RichJoinFunction<NewPer
     @Override
     public Query8WindowOutput join(NewPersonEvent person, AuctionEvent auction) {
 
+        long evictingTimestamp = System.currentTimeMillis();
+
         Long personCreationTimestamp = person.getTimestamp();
         Long personIngestionTimestamp = person.getIngestionTimestamp();
 
@@ -24,7 +26,7 @@ public class JoiningNewUsersWithAuctionsFunction extends RichJoinFunction<NewPer
         long personId = person.getPersonId();
         String personName = person.getName();
 
-        return new Query8WindowOutput(personCreationTimestamp, personIngestionTimestamp, auctionCreationTimestamp, auctionIngestionTimestamp, personId, personName);
+        return new Query8WindowOutput(evictingTimestamp,personCreationTimestamp, personIngestionTimestamp, auctionCreationTimestamp, auctionIngestionTimestamp, personId, personName);
     }
 }
 

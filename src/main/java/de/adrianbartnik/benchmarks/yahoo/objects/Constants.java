@@ -9,10 +9,6 @@ import java.util.List;
  */
 public class Constants implements Serializable {
 
-    public static final String CAMPAIGNS_TOPIC = "campaigns";
-    public static final String EVENTS_TOPIC = "events";
-    public static final String OUTPUT_TOPIC = "output";
-
     public static final List<String> AD_TYPES = Arrays.asList("banner", "modal", "sponsored-search", "mail", "mobile");
     public static final List<String> EVENT_TYPES = Arrays.asList("view", "click", "purchase");
 

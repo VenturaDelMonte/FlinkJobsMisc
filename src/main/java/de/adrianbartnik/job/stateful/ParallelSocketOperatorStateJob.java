@@ -9,6 +9,8 @@ import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -16,6 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ParallelSocketOperatorStateJob {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ParallelSocketOperatorStateJob.class);
 
     private static final String JOB_NAME = "ParallelSocketOperatorStateJob";
 
@@ -46,7 +50,7 @@ public class ParallelSocketOperatorStateJob {
 
         final int sourceParallelism = hostnames.size();
         for (int i = 0; i < hostnames.size(); i++) {
-            Log.debug("Connecting to socket {}:{}", hostnames.get(i), ports.get(i));
+            LOG.debug("Connecting to socket {}:{}", hostnames.get(i), ports.get(i));
         }
 
         FlinkJobFactory<Tuple2<Timestamp, String>, Tuple4<Timestamp, String, String, Long>> creator =

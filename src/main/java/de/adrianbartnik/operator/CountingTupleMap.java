@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.List;
 
-public class CountingTupleMap extends AbstractOperator<Tuple2<Timestamp, String>, Tuple4<Timestamp, String, String, Long>> {
+public class CountingTupleMap extends AbstractOperator<Tuple2<Timestamp, Long>, Tuple4<Timestamp, Long, String, Long>> {
 
     private static final String OPERATOR_NAME = "CountingMap";
 
@@ -24,14 +24,14 @@ public class CountingTupleMap extends AbstractOperator<Tuple2<Timestamp, String>
     }
 
     @Override
-    public DataStream<Tuple4<Timestamp, String, String, Long>> createOperator(String[] arguments, DataStream<Tuple2<Timestamp, String>> dataSource) {
+    public DataStream<Tuple4<Timestamp, Long, String, Long>> createOperator(String[] arguments, DataStream<Tuple2<Timestamp, Long>> dataSource) {
         return dataSource.map(new InnerMap()).name(OPERATOR_NAME).setParallelism(parallelism);
     }
 
     /**
      * Each mapper counts how many items it has processed.
      */
-    public class InnerMap extends RichMapFunction<Tuple2<Timestamp, String>, Tuple4<Timestamp, String, String, Long>> implements ListCheckpointed<Long> {
+    public class InnerMap extends RichMapFunction<Tuple2<Timestamp, Long>, Tuple4<Timestamp, Long, String, Long>> implements ListCheckpointed<Long> {
 
         private long numberOfProcessedElements = 0;
 
@@ -45,18 +45,18 @@ public class CountingTupleMap extends AbstractOperator<Tuple2<Timestamp, String>
         }
 
         @Override
-        public Tuple4<Timestamp, String, String, Long> map(Tuple2<Timestamp, String> value) throws Exception {
+        public Tuple4<Timestamp, Long, String, Long> map(Tuple2<Timestamp, Long> value) {
             numberOfProcessedElements++;
             return new Tuple4<>(value.f0, value.f1, taskNameWithSubtasks, numberOfProcessedElements);
         }
 
         @Override
-        public List<Long> snapshotState(long checkpointId, long timestamp) throws Exception {
+        public List<Long> snapshotState(long checkpointId, long timestamp) {
             return Collections.singletonList(numberOfProcessedElements);
         }
 
         @Override
-        public void restoreState(List<Long> state) throws Exception {
+        public void restoreState(List<Long> state) {
             for (Long number : state) {
                 numberOfProcessedElements += number;
             }

@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class TimestampedNumberParallelSocketSource extends AbstractSource<Tuple2<Timestamp, String>> implements Serializable {
+public class TimestampedNumberParallelSocketSource extends AbstractSource<Tuple2<Timestamp, Long>> implements Serializable {
 
     private static final String OPERATOR_NAME = "ParallelSocketSource";
 
@@ -27,9 +27,9 @@ public class TimestampedNumberParallelSocketSource extends AbstractSource<Tuple2
     }
 
     @Override
-    public DataStream<Tuple2<Timestamp, String>> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment) {
+    public DataStream<Tuple2<Timestamp, Long>> createSource(String[] arguments, StreamExecutionEnvironment executionEnvironment) {
 
-        TypeInformation<Tuple2<Timestamp, String>> typeInformation = TypeInformation.of(new TypeHint<Tuple2<Timestamp, String>>() {});
+        TypeInformation<Tuple2<Timestamp, Long>> typeInformation = TypeInformation.of(new TypeHint<Tuple2<Timestamp, Long>>() {});
 
         TimestampNumberSocketSocketFunction function = new TimestampNumberSocketSocketFunction(hostnames, ports);
 
@@ -41,14 +41,14 @@ public class TimestampedNumberParallelSocketSource extends AbstractSource<Tuple2
                 .setParallelism(parallelism);
     }
 
-    public class TimestampNumberSocketSocketFunction extends AbstractSocketSourceFunction<Tuple2<Timestamp, String>> {
+    public class TimestampNumberSocketSocketFunction extends AbstractSocketSourceFunction<Tuple2<Timestamp, Long>> {
 
         public TimestampNumberSocketSocketFunction(List<String> hostnames, List<Integer> ports) {
             super(hostnames, ports);
         }
 
         @Override
-        protected Tuple2<Timestamp, String> stringToRecord(String record) {
+        protected Tuple2<Timestamp, Long> stringToRecord(String record) {
             if (record == null || !record.contains("#")) {
                 throw new IllegalArgumentException("Malformed input from sockets: " + record);
             }
@@ -59,7 +59,7 @@ public class TimestampedNumberParallelSocketSource extends AbstractSource<Tuple2
                 throw new IllegalArgumentException("Malformed input from sockets: " + record);
             }
 
-            return new Tuple2<>(new Timestamp(Long.valueOf(split[0])), split[1]);
+            return new Tuple2<>(new Timestamp(Long.valueOf(split[0])), Long.valueOf(split[1]));
         }
 
         @Override

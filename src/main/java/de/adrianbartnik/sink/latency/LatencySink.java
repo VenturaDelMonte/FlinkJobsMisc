@@ -10,11 +10,9 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, Long>> implements Serializable {
+public class LatencySink extends AbstractSink<Tuple4<Timestamp, Long, String, Long>> implements Serializable {
 
     private static final String OPERATOR_NAME = "LatencySink";
-
-    private static final Logger LOG = LoggerFactory.getLogger(LatencySink.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -31,7 +29,7 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
     }
 
     @Override
-    public void createSink(String[] arguments, DataStream<Tuple4<Timestamp, String, String, Long>> dataSource) {
+    public void createSink(String[] arguments, DataStream<Tuple4<Timestamp, Long, String, Long>> dataSource) {
         dataSource
                 .writeUsingOutputFormat(new CustomLatencyOutputFormat(new Path(path)))
                 .setParallelism(parallelism)
@@ -44,14 +42,14 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, String, String, 
      * Record delimiter separate records from each other ('\n' is common). Field
      * delimiters separate fields within a record.
      */
-    private class CustomLatencyOutputFormat extends AbstractOutputFormat<Tuple4<Timestamp, String, String, Long>> {
+    private class CustomLatencyOutputFormat extends AbstractOutputFormat<Tuple4<Timestamp, Long, String, Long>> {
 
         CustomLatencyOutputFormat(Path outputPath) {
             super(outputPath);
         }
 
         @Override
-        StringBuilder getOutputString(Tuple4<Timestamp, String, String, Long> record) {
+        StringBuilder getOutputString(Tuple4<Timestamp, Long, String, Long> record) {
 
             this.stringBuilder.append((System.currentTimeMillis() - record.f0.getTime()));
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);

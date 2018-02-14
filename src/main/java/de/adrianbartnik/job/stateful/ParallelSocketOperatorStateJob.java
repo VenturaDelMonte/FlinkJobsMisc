@@ -64,7 +64,7 @@ public class ParallelSocketOperatorStateJob {
             LOG.debug("Connecting to socket {}:{}", hostnames.get(i), ports.get(i));
         }
 
-        FlinkJobFactory<Tuple2<Timestamp, String>, Tuple4<Timestamp, String, String, Long>> creator =
+        FlinkJobFactory<Tuple2<Timestamp, Long>, Tuple4<Timestamp, Long, String, Long>> creator =
                 new FlinkJobFactory<>(args, false, true);
 
         TimestampedNumberParallelSocketSource sourceFunction =

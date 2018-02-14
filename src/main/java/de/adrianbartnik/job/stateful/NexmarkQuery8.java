@@ -4,6 +4,7 @@ import de.adrianbartnik.data.nexmark.AuctionEvent;
 import de.adrianbartnik.data.nexmark.NewPersonEvent;
 import de.adrianbartnik.data.nexmark.intermediate.Query8WindowOutput;
 import de.adrianbartnik.factory.FlinkJobFactory;
+import de.adrianbartnik.job.parser.ParallelSocketArgumentParser;
 import de.adrianbartnik.job.timestampextractor.AuctionEventTimestampExtractor;
 import de.adrianbartnik.job.timestampextractor.PersonEventTimestampExtractor;
 import de.adrianbartnik.operator.JoiningNewUsersWithAuctionsCoGroupFunction;
@@ -22,8 +23,6 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class NexmarkQuery8 {
@@ -50,13 +49,8 @@ public class NexmarkQuery8 {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");
         }
 
-        List<String> hostnames = Arrays.asList(hostnames_string.split(","));
-        List<String> separated_ports = Arrays.asList(ports_string.split(","));
-
-        List<Integer> ports = new ArrayList<>();
-        for (String port : separated_ports) {
-            ports.add(Integer.valueOf(port));
-        }
+        List<String> hostnames = ParallelSocketArgumentParser.ParseHostnames(hostnames_string);
+        List<Integer> ports = ParallelSocketArgumentParser.ParsePorts(ports_string);
 
         if (ports.size() != hostnames.size()) {
             throw new IllegalArgumentException("Hostname and Ports must be of equal size");

@@ -1,6 +1,7 @@
 package de.adrianbartnik.job.stateful;
 
 import de.adrianbartnik.factory.FlinkJobFactory;
+import de.adrianbartnik.job.parser.ParallelSocketArgumentParser;
 import de.adrianbartnik.operator.CountingTupleMap;
 import de.adrianbartnik.sink.latency.LatencySink;
 import de.adrianbartnik.source.socket.TimestampedNumberParallelSocketSource;
@@ -12,8 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ParallelSocketOperatorStateJob {
@@ -21,8 +20,6 @@ public class ParallelSocketOperatorStateJob {
     private static final Logger LOG = LoggerFactory.getLogger(ParallelSocketOperatorStateJob.class);
 
     private static final String JOB_NAME = "ParallelSocketOperatorStateJob";
-
-    private static final int[] PORTS = {31000, 31001, 31002, 31003, 31004, 31005, 31006, 31007, 31008, 31009};
 
     public static void main(String[] args) throws Exception {
 
@@ -37,23 +34,8 @@ public class ParallelSocketOperatorStateJob {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");
         }
 
-        List<String> hostnames = Arrays.asList(hostnames_string.split(","));
-        List<String> separated_ports = Arrays.asList(ports_string.split(","));
-
-        for (int i = 0; i < hostnames.size(); i++) {
-            if (IsPowerMachineNumber(hostnames.get(i))) {
-                hostnames.set(i, "power" + hostnames.get(i));
-            }
-        }
-
-        List<Integer> ports = new ArrayList<>();
-        for (String port : separated_ports) {
-            if (IsSingleDigit(port)) {
-                ports.add(PORTS[Integer.valueOf(port)]);
-            } else {
-                ports.add(Integer.valueOf(port));
-            }
-        }
+        List<String> hostnames = ParallelSocketArgumentParser.ParseHostnames(hostnames_string);
+        List<Integer> ports = ParallelSocketArgumentParser.ParsePorts(ports_string);
 
         if (ports.size() != hostnames.size()) {
             throw new IllegalArgumentException("Hostname and Ports must be of equal size");
@@ -76,26 +58,5 @@ public class ParallelSocketOperatorStateJob {
                         new LatencySink(sinkParallelism, output_path));
 
         job.execute(JOB_NAME);
-    }
-
-    static boolean IsPowerMachineNumber(String string) {
-        switch (string) {
-            case "1":
-            case "2":
-            case "3":
-            case "4":
-            case "5":
-            case "6":
-            case "7":
-            case "8":
-            case "9":
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    static boolean IsSingleDigit(String string) {
-        return (Integer.valueOf(string) / 10) == 0;
     }
 }

@@ -9,6 +9,7 @@ import de.adrianbartnik.benchmarks.yahoo.operators.EventAndProcessingTimeTrigger
 import de.adrianbartnik.benchmarks.yahoo.operators.IndependentJoinMapper;
 import de.adrianbartnik.benchmarks.yahoo.operators.StaticJoinMapper;
 import de.adrianbartnik.factory.FlinkJobFactory;
+import de.adrianbartnik.job.parser.ParallelSocketArgumentParser;
 import de.adrianbartnik.sink.latency.YahooWindowCountLatencySink;
 import de.adrianbartnik.source.socket.IndependentYahooEventParallelSocketSource;
 import de.adrianbartnik.source.socket.YahooEventParallelSocketSource;
@@ -49,13 +50,8 @@ public class YahooBenchmark {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");
         }
 
-        List<String> hostnames = Arrays.asList(hostnames_string.split(","));
-        List<String> separated_ports = Arrays.asList(ports_string.split(","));
-
-        List<Integer> ports = new ArrayList<>();
-        for (String port : separated_ports) {
-            ports.add(Integer.valueOf(port));
-        }
+        List<String> hostnames = ParallelSocketArgumentParser.ParseHostnames(hostnames_string);
+        List<Integer> ports = ParallelSocketArgumentParser.ParsePorts(ports_string);
 
         if (ports.size() != hostnames.size()) {
             throw new IllegalArgumentException("Hostname and Ports must be of equal size");

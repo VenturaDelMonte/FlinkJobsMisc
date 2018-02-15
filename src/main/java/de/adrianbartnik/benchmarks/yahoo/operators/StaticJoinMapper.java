@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Joins event id with advertising id and the event timestamp
  */
-public class StaticJoinMapper implements MapFunction<Event, JoinedEventWithCampaign> {
+public class StaticJoinMapper<T extends Event> implements MapFunction<T, JoinedEventWithCampaign> {
 
     private final Map<String, String> campaigns;
 
@@ -18,7 +18,7 @@ public class StaticJoinMapper implements MapFunction<Event, JoinedEventWithCampa
     }
 
     @Override
-    public JoinedEventWithCampaign map(Event value) {
+    public JoinedEventWithCampaign map(T value) {
         return new JoinedEventWithCampaign(campaigns.get(value.advertisingId), value.advertisingId, value.eventTime);
     }
 }

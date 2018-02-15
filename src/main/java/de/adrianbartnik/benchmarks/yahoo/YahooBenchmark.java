@@ -37,6 +37,8 @@ public class YahooBenchmark {
 
     public static final String JOB_NAME = "Flink Yahoo Benchmark";
 
+    private static final int NUMBER_OF_ADS_PER_CAMPAIGN = 10;
+
     public static void main(String args[]) throws Exception {
 
         final ParameterTool params = ParameterTool.fromArgs(args);
@@ -67,7 +69,8 @@ public class YahooBenchmark {
         int numberOfTuples = params.getInt("numberOfTuples", 50000);
         int triggerIntervalMs = params.getInt("triggerIntervalMs", 0);
         int artificialDelay = params.getInt("artificialDelayMs", 0);
-        String generator = params.get("generator", "independent");
+        long seed = params.getLong("seed", 1337);
+        String generator = params.get("generator", "uuid");
 
         Preconditions.checkArgument(parallelism > 0, "Parallelism needs to be tmp positive integer.");
         Preconditions.checkArgument(triggerIntervalMs >= 0, "Trigger interval can't be negative.");
@@ -79,6 +82,13 @@ public class YahooBenchmark {
 
         if (params.getBoolean("enableObjectReuse", true)) {
             environment.getConfig().enableObjectReuse();
+        }
+
+        List<CampaignAd> campaignAds = GenerateCampaignMapping(numCampaigns, seed);
+
+        Map<String, String> campaignLookup = new HashMap<>();
+        for (CampaignAd campaignAd : campaignAds) {
+            campaignLookup.put(campaignAd.ad_id, campaignAd.campaign_id);
         }
 
         WindowedStream<JoinedEventWithCampaign, String, TimeWindow> windowedEvents;
@@ -100,7 +110,7 @@ public class YahooBenchmark {
                 windowedEvents =
                         new YahooEventParallelSocketSource(hostnames, ports, sourceParallelism).createSource(args, environment)
                                 .filter(value -> value.eventType.equals("view"))
-                                .map(new IndependentJoinMapper<>())
+                                .map(new StaticJoinMapper<>(campaignLookup))
                                 .assignTimestampsAndWatermarks(new AdTimestampExtractor())
                                 .keyBy(value -> value.campaignId)
                                 .window(TumblingEventTimeWindows.of(windowMillis));
@@ -108,18 +118,10 @@ public class YahooBenchmark {
                 break;
 
             case "flinkSource":
-                List<CampaignAd> campaignAds = generateCampaignMapping(numCampaigns);
-
-                // Check here for correctness, in case of errors
-                Map<String, String> campaignLookup = new HashMap<>();
-                for (CampaignAd campaignAd : campaignAds) {
-                    campaignLookup.put(campaignAd.ad_id, campaignAd.campaign_id);
-                }
-
                 windowedEvents = environment
                         .addSource(new EventGenerator(campaignAds, numberOfTuples, artificialDelay))
                         .filter(value -> value.eventType.equals("view"))
-                        .map(new StaticJoinMapper(campaignLookup))
+                        .map(new StaticJoinMapper<>(campaignLookup))
                         .assignTimestampsAndWatermarks(new AdTimestampExtractor())
                         .keyBy(value -> value.campaignId)
                         .window(TumblingEventTimeWindows.of(windowMillis));
@@ -137,7 +139,8 @@ public class YahooBenchmark {
 
 
         SingleOutputStreamOperator<WindowedCount> fold = windowedEvents.fold(
-                new WindowedCount(null, "", 0, new Timestamp(0L)), (accumulator, value) -> {
+                new WindowedCount(null, "", 0, new Timestamp(0L)),
+                (accumulator, value) -> {
                     Timestamp lastUpdate;
 
                     if (accumulator.lastUpdate.getTime() < value.eventTime.getTime()) {
@@ -168,7 +171,7 @@ public class YahooBenchmark {
     /**
      * Generate in-memory tmp to campaignId map. We generate 10 ads per campaign.
      */
-    private static List<CampaignAd> generateCampaignMapping(int numCampaigns) {
+    private static List<CampaignAd> GenerateCampaignMapping(int numCampaigns) {
 
         List<CampaignAd> campaignAds = new ArrayList<>();
 
@@ -178,6 +181,27 @@ public class YahooBenchmark {
 
             for (int j = 0; j < 10; j++) {
                 campaignAds.add(new CampaignAd(UUID.randomUUID().toString(), campaign));
+            }
+        }
+
+        return campaignAds;
+    }
+
+    private static List<CampaignAd> GenerateCampaignMapping(long numCampaigns, long seed) {
+        Random random = new Random(seed);
+
+        byte[] bytes = new byte[7];
+
+        List<CampaignAd> campaignAds = new ArrayList<>();
+
+        for (int i = 0; i < numCampaigns; i++) {
+
+            random.nextBytes(bytes);
+            String campaign = UUID.nameUUIDFromBytes(bytes).toString();
+
+            for (int j = 0; j < NUMBER_OF_ADS_PER_CAMPAIGN; j++) {
+                random.nextBytes(bytes);
+                campaignAds.add(new CampaignAd(UUID.nameUUIDFromBytes(bytes).toString(), campaign));
             }
         }
 

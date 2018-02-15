@@ -41,15 +41,15 @@ public class YahooWindowCountLatencySink extends AbstractSink<WindowedCount> imp
         }
 
         @Override
-        StringBuilder getOutputString(WindowedCount record) {
+        StringBuilder getOutputString(WindowedCount count) {
 
-            this.stringBuilder.append(record.campaignId);
+            this.stringBuilder.append(count.campaignId);
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
-            this.stringBuilder.append(record.count);
+            this.stringBuilder.append(count.count);
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
-            this.stringBuilder.append(record.lastUpdate.getTime());
+            this.stringBuilder.append(System.currentTimeMillis() - count.lastUpdate.getTime());
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
-            this.stringBuilder.append(record.timeWindow.getTime());
+            this.stringBuilder.append(count.timeWindow.getTime());
 
             return this.stringBuilder;
         }

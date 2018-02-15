@@ -64,7 +64,7 @@ public class TimestampedNumberParallelSocketSource extends AbstractSource<Tuple2
 
         @Override
         protected String getStartCommand() {
-            return "from:" + numberProcessedMessages + ":reconnect\n";
+            return getRuntimeContext().getIndexOfThisSubtask() + ":from:" + numberProcessedMessages + ":reconnect\n";
         }
     }
 }

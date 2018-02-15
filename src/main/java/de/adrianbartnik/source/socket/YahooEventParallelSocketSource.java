@@ -67,7 +67,7 @@ public class YahooEventParallelSocketSource extends AbstractSource<Event> implem
 
         @Override
         protected String getStartCommand() {
-            return "yahoo\n";
+            return getRuntimeContext().getIndexOfThisSubtask() + ":yahoo\n";
         }
     }
 }

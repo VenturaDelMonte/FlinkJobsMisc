@@ -64,7 +64,7 @@ public class PersonParallelSocketSource extends AbstractSource<NewPersonEvent> i
 
         @Override
         protected String getStartCommand() {
-            return "persons\n";
+            return getRuntimeContext().getIndexOfThisSubtask() + ":persons\n";
         }
     }
 }

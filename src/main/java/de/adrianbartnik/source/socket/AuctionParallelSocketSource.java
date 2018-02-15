@@ -65,7 +65,7 @@ public class AuctionParallelSocketSource extends AbstractSource<AuctionEvent> im
 
         @Override
         protected String getStartCommand() {
-            return "auctions\n";
+            return getRuntimeContext().getIndexOfThisSubtask() + ":auctions\n";
         }
     }
 }

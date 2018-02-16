@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
@@ -96,7 +97,18 @@ public abstract class AbstractSocketSourceFunction<R> extends RichParallelSource
 
             char[] cbuf = new char[8192];
             int bytesRead;
-            while (isRunning && (bytesRead = reader.read(cbuf)) != -1) {
+            while (isRunning) {
+
+                try {
+                    if ((bytesRead = reader.read(cbuf)) == -1) {
+                        LOG.error("SocketSource has reached end of file");
+                        break;
+                    }
+                } catch (IOException exception) {
+                    LOG.error("Error while reading from BufferedReader", exception);
+                    break;
+                }
+
                 buffer.append(cbuf, 0, bytesRead);
                 int delimPos;
                 while (buffer.length() >= DELIMITER.length() && (delimPos = buffer.indexOf(DELIMITER)) != -1) {

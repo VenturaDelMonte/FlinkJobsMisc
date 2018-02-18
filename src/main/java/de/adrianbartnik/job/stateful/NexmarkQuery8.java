@@ -62,7 +62,7 @@ public class NexmarkQuery8 {
         }
 
         StreamExecutionEnvironment streamExecutionEnvironment =
-                new FlinkJobFactory(args, false, true).setupExecutionEnvironment();
+                new FlinkJobFactory(args, true, true).setupExecutionEnvironment();
 
         streamExecutionEnvironment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 

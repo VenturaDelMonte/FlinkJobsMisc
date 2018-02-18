@@ -45,7 +45,7 @@ public class AuctionParallelSocketSource extends AbstractSource<AuctionEvent> im
      */
     public class AuctionSocketSourceFunction extends AbstractSocketSourceFunction<AuctionEvent> {
 
-        public AuctionSocketSourceFunction(List<String> hostnames, List<Integer> ports) {
+        AuctionSocketSourceFunction(List<String> hostnames, List<Integer> ports) {
             super(hostnames, ports);
         }
 
@@ -63,9 +63,16 @@ public class AuctionParallelSocketSource extends AbstractSource<AuctionEvent> im
                     Long.valueOf(split[7]));
         }
 
+        /**
+         * Add 1000 to start command in order to not interfere with {@link PersonParallelSocketSource}.
+         * Currently, the generator assigns the type of record type to the index of the source function.
+         * Since both sources request the same index simultaneously, this approach will fail.
+         *
+         * @return The start command
+         */
         @Override
         protected String getStartCommand() {
-            return getRuntimeContext().getIndexOfThisSubtask() + ":auctions\n";
+            return (getRuntimeContext().getIndexOfThisSubtask() + 1000) + ":auctions\n";
         }
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 
 public class YahooEventParallelSocketSource extends AbstractSource<Event> implements Serializable {
 
-    private static final String OPERATOR_NAME = "AuctionParallelSocketSource";
+    private static final String OPERATOR_NAME = "YahooEventParallelSocketSource";
 
     private final List<String> hostnames;
     private final List<Integer> ports;

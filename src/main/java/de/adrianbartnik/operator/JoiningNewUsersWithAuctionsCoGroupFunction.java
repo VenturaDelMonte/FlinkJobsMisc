@@ -21,38 +21,31 @@ public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunct
                         Iterable<AuctionEvent> auctions,
                         Collector<Query8WindowOutput> out) {
 
-        LOG.debug("{} was called with {} and {}", this.getClass(), persons, auctions);
+        NewPersonEvent person = persons.iterator().next();
 
-        boolean receivedPerson = false;
+        Long personCreationTimestamp = person.getTimestamp();
+        Long personIngestionTimestamp = person.getIngestionTimestamp();
 
-        for (NewPersonEvent person : persons) {
+        long personId = person.getPersonId();
+        String personName = person.getName();
 
-            if (receivedPerson) {
-                LOG.debug("{} was called with {} and {}", this.getClass(), persons, auctions);
-                throw new IllegalStateException("Only expects to receive one person as id's should be unique");
-            }
+        for (AuctionEvent auction : auctions) {
+            Long auctionCreationTimestamp = auction.getTimestamp();
+            Long auctionIngestionTimestamp = auction.getIngestionTimestamp();
 
-            Long personCreationTimestamp = person.getTimestamp();
-            Long personIngestionTimestamp = person.getIngestionTimestamp();
+            out.collect(new Query8WindowOutput(
+                    System.currentTimeMillis(),
+                    personCreationTimestamp,
+                    personIngestionTimestamp,
+                    auctionCreationTimestamp,
+                    auctionIngestionTimestamp,
+                    personId,
+                    personName));
+        }
 
-            long personId = person.getPersonId();
-            String personName = person.getName();
-
-            for (AuctionEvent auction : auctions) {
-                Long auctionCreationTimestamp = auction.getTimestamp();
-                Long auctionIngestionTimestamp = auction.getIngestionTimestamp();
-
-                out.collect(new Query8WindowOutput(
-                        System.currentTimeMillis(),
-                        personCreationTimestamp,
-                        personIngestionTimestamp,
-                        auctionCreationTimestamp,
-                        auctionIngestionTimestamp,
-                        personId,
-                        personName));
-            }
-
-            receivedPerson = true;
+        if (persons.iterator().hasNext()) {
+            LOG.debug("{} was called with {} and {}", this.getClass(), persons, auctions);
+            throw new IllegalStateException("Only expects to receive one person as id's should be unique");
         }
     }
 }

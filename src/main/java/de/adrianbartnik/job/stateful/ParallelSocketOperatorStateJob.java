@@ -29,6 +29,7 @@ public class ParallelSocketOperatorStateJob {
         final String hostnames_string = params.get("hostnames");
         final String ports_string = params.get("ports");
         final String output_path = params.get("path", "benchmarkOutput");
+        final boolean onlyLatency = params.getBoolean("onlyLatency", true);
 
         if (hostnames_string == null || hostnames_string.isEmpty() || ports_string == null || ports_string.isEmpty()) {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");
@@ -55,7 +56,7 @@ public class ParallelSocketOperatorStateJob {
         StreamExecutionEnvironment job =
                 creator.createJob(sourceFunction,
                         new CountingTupleMap(mapParallelism),
-                        new LatencySink(sinkParallelism, output_path));
+                        new LatencySink(sinkParallelism, output_path, onlyLatency));
 
         job.execute(JOB_NAME);
     }

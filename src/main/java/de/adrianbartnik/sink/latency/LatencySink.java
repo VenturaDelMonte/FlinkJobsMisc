@@ -17,21 +17,22 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, Long, String, Lo
     private static final long serialVersionUID = 1L;
 
     private final String path;
-
-    public LatencySink(String path) {
-        super();
-        this.path = path;
-    }
+    private final boolean onlyLatency;
 
     public LatencySink(int parallelism, String path) {
-        super(parallelism);
+        this(parallelism, path, true);
+    }
+
+    public LatencySink(int sinkParallelism, String path, boolean onlyLatency) {
+        super(sinkParallelism);
         this.path = path;
+        this.onlyLatency = onlyLatency;
     }
 
     @Override
     public void createSink(String[] arguments, DataStream<Tuple4<Timestamp, Long, String, Long>> dataSource) {
         dataSource
-                .writeUsingOutputFormat(new CustomLatencyOutputFormat(new Path(path)))
+                .writeUsingOutputFormat(new CustomLatencyOutputFormat(new Path(path), onlyLatency))
                 .setParallelism(parallelism)
                 .name(OPERATOR_NAME);
     }
@@ -44,8 +45,11 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, Long, String, Lo
      */
     private class CustomLatencyOutputFormat extends AbstractOutputFormat<Tuple4<Timestamp, Long, String, Long>> {
 
-        CustomLatencyOutputFormat(Path outputPath) {
+        private final boolean onlyLatency;
+
+        CustomLatencyOutputFormat(Path outputPath, boolean onlyLatency) {
             super(outputPath);
+            this.onlyLatency = onlyLatency;
         }
 
         @Override
@@ -54,10 +58,13 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, Long, String, Lo
             this.stringBuilder.append((System.currentTimeMillis() - record.f0.getTime()));
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
             this.stringBuilder.append(record.f1);
-            this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
-            this.stringBuilder.append(record.f2);
-            this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
-            this.stringBuilder.append(record.f3);
+
+            if (!onlyLatency) {
+                this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
+                this.stringBuilder.append(record.f2);
+                this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
+                this.stringBuilder.append(record.f3);
+            }
 
             return this.stringBuilder;
         }

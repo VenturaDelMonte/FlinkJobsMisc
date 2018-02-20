@@ -48,9 +48,15 @@ public class WindowLatencySink extends AbstractSink<Query8WindowOutput> implemen
         @Override
         StringBuilder getOutputString(Query8WindowOutput record) {
 
-            this.stringBuilder.append((System.currentTimeMillis() - record.getAuctionCreationTimestamp()));
+            long timeMillis = System.currentTimeMillis();
+
+            this.stringBuilder.append(timeMillis);
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
-            this.stringBuilder.append((System.currentTimeMillis() - record.getPersonCreationTimestamp()));
+            this.stringBuilder.append((timeMillis - record.getWindowEvictingTimestamp()));
+            this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
+            this.stringBuilder.append((timeMillis - record.getAuctionCreationTimestamp()));
+            this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
+            this.stringBuilder.append((timeMillis - record.getPersonCreationTimestamp()));
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);
             this.stringBuilder.append(record.getPersonId());
             this.stringBuilder.append(AbstractOutputFormat.FIELD_DELIMITER);

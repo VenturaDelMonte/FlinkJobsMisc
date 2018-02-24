@@ -54,5 +54,4 @@ public class YahooWindowCountLatencySink extends AbstractSink<WindowedCount> imp
             return this.stringBuilder;
         }
     }
-
 }

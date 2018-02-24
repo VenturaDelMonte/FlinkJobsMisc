@@ -5,9 +5,12 @@ import de.adrianbartnik.job.parser.ParallelSocketArgumentParser;
 import de.adrianbartnik.operator.CountingTupleMap;
 import de.adrianbartnik.sink.latency.LatencySink;
 import de.adrianbartnik.source.socket.TimestampedNumberParallelSocketSource;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class ParallelSocketOperatorStateJob {
+public class ParallelSocketOperatorStateWithFilterJob {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ParallelSocketOperatorStateJob.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ParallelSocketOperatorStateWithFilterJob.class);
 
     private static final String JOB_NAME = "ParallelSocketOperatorStateJob";
 
@@ -48,17 +51,22 @@ public class ParallelSocketOperatorStateJob {
             LOG.debug("Connecting to socket {}:{}", hostnames.get(i), ports.get(i));
         }
 
-        FlinkJobFactory<Tuple2<Timestamp, Long>, Tuple4<Timestamp, Long, String, Long>> creator =
-                new FlinkJobFactory<>(args, false, true);
+        StreamExecutionEnvironment environment =
+                new FlinkJobFactory<>(args, false, true)
+                        .setupExecutionEnvironment();
 
-        TimestampedNumberParallelSocketSource sourceFunction =
-                new TimestampedNumberParallelSocketSource(hostnames, ports, sourceParallelism);
+        DataStream<Tuple2<Timestamp, Long>> sourceFunction =
+                new TimestampedNumberParallelSocketSource(hostnames, ports, sourceParallelism)
+                        .createSource(args, environment);
 
-        StreamExecutionEnvironment job =
-                creator.createJob(sourceFunction,
-                        new CountingTupleMap(mapParallelism),
-                        new LatencySink(sinkParallelism, output_path, onlyLatency, onlyNthLatencyOutput));
+        SingleOutputStreamOperator<Tuple2<Timestamp, Long>> filter =
+                sourceFunction.filter((FilterFunction<Tuple2<Timestamp, Long>>) value -> value.f1 % 5 == 0);
 
-        job.execute(JOB_NAME);
+        DataStream<Tuple4<Timestamp, Long, String, Long>> countingTupleMap =
+                new CountingTupleMap(mapParallelism).createOperator(args, filter);
+
+        new LatencySink(sinkParallelism, output_path, onlyLatency, onlyNthLatencyOutput).createSink(args, countingTupleMap);
+
+        environment.execute(JOB_NAME);
     }
 }

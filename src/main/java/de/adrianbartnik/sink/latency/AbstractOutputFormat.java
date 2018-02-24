@@ -27,6 +27,10 @@ public abstract class AbstractOutputFormat<T> extends FileOutputFormat<T> implem
 
     static final String FIELD_DELIMITER = CsvInputFormat.DEFAULT_FIELD_DELIMITER;
 
+    private final int onlyNthLatencyOutput;
+
+    private long numberOfRecords = 0;
+
     private transient Writer wrt;
 
     final StringBuilder stringBuilder = new StringBuilder();
@@ -36,8 +40,14 @@ public abstract class AbstractOutputFormat<T> extends FileOutputFormat<T> implem
      *
      * @param outputPath The path where the file is written.
      */
-    public AbstractOutputFormat(Path outputPath) {
+    AbstractOutputFormat(Path outputPath) {
         super(outputPath);
+        onlyNthLatencyOutput = 1;
+    }
+
+    AbstractOutputFormat(Path outputPath, int onlyNthLatencyOutput) {
+        super(outputPath);
+        this.onlyNthLatencyOutput = onlyNthLatencyOutput;
     }
 
     // --------------------------------------------------------------------------------------------
@@ -69,10 +79,15 @@ public abstract class AbstractOutputFormat<T> extends FileOutputFormat<T> implem
 
     @Override
     public void writeRecord(T element) throws IOException {
-        stringBuilder.setLength(0);
-        this.wrt.write(getOutputString(element).toString());
-        this.wrt.write(RECORD_DELIMITER);
-        this.wrt.flush();
+
+        numberOfRecords++;
+
+        if (numberOfRecords % onlyNthLatencyOutput == 0) {
+            stringBuilder.setLength(0);
+            this.wrt.write(getOutputString(element).toString());
+            this.wrt.write(RECORD_DELIMITER);
+            this.wrt.flush();
+        }
     }
 
     abstract StringBuilder getOutputString(T record);

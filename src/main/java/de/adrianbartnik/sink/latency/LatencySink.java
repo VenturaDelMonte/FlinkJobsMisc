@@ -18,21 +18,27 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, Long, String, Lo
 
     private final String path;
     private final boolean onlyLatency;
+    private final int onlyNthLatencyOutput;
 
     public LatencySink(int parallelism, String path) {
         this(parallelism, path, true);
     }
 
     public LatencySink(int sinkParallelism, String path, boolean onlyLatency) {
+        this(sinkParallelism, path, onlyLatency, 1);
+    }
+
+    public LatencySink(int sinkParallelism, String path, boolean onlyLatency, int onlyNthLatencyOutput) {
         super(sinkParallelism);
         this.path = path;
         this.onlyLatency = onlyLatency;
+        this.onlyNthLatencyOutput = onlyNthLatencyOutput;
     }
 
     @Override
     public void createSink(String[] arguments, DataStream<Tuple4<Timestamp, Long, String, Long>> dataSource) {
         dataSource
-                .writeUsingOutputFormat(new CustomLatencyOutputFormat(new Path(path), onlyLatency))
+                .writeUsingOutputFormat(new CustomLatencyOutputFormat(new Path(path), onlyLatency, onlyNthLatencyOutput))
                 .setParallelism(parallelism)
                 .name(OPERATOR_NAME);
     }
@@ -47,8 +53,8 @@ public class LatencySink extends AbstractSink<Tuple4<Timestamp, Long, String, Lo
 
         private final boolean onlyLatency;
 
-        CustomLatencyOutputFormat(Path outputPath, boolean onlyLatency) {
-            super(outputPath);
+        CustomLatencyOutputFormat(Path outputPath, boolean onlyLatency, int onlyNthLatencyOutput) {
+            super(outputPath, onlyNthLatencyOutput);
             this.onlyLatency = onlyLatency;
         }
 

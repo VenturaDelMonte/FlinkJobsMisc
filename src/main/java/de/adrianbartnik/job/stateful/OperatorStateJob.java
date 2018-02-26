@@ -15,7 +15,7 @@ public class OperatorStateJob {
         FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, true);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new RabbitMQSource(), new CountingMap<String>(), new TextOutputSink<String>());
+                creator.createJob(new RabbitMQSource(), new CountingMap<>(), new TextOutputSink<String>(1, "dummy"));
 
         job.execute(JOB_NAME);
     }

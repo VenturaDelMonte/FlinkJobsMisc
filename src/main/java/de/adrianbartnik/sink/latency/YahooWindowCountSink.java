@@ -8,20 +8,20 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 
 import java.io.Serializable;
 
-public class YahooWindowCountLatencySink extends AbstractSink<WindowedCount> implements Serializable {
+public class YahooWindowCountSink extends AbstractSink<WindowedCount> implements Serializable {
 
-    private static final String OPERATOR_NAME = "WindowLatencySink";
+    private static final String OPERATOR_NAME = "YahooWindowCountSink";
 
     private static final long serialVersionUID = 1L;
 
     private final String path;
 
-    public YahooWindowCountLatencySink(String path) {
+    public YahooWindowCountSink(String path) {
         super();
         this.path = path;
     }
 
-    public YahooWindowCountLatencySink(int parallelism, String path) {
+    public YahooWindowCountSink(int parallelism, String path) {
         super(parallelism);
         this.path = path;
     }

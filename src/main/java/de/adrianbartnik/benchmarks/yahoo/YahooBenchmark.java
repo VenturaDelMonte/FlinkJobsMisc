@@ -10,7 +10,7 @@ import de.adrianbartnik.benchmarks.yahoo.operators.IndependentJoinMapper;
 import de.adrianbartnik.benchmarks.yahoo.operators.StaticJoinMapper;
 import de.adrianbartnik.factory.FlinkJobFactory;
 import de.adrianbartnik.job.parser.ParallelSocketArgumentParser;
-import de.adrianbartnik.sink.latency.YahooWindowCountLatencySink;
+import de.adrianbartnik.sink.latency.YahooWindowCountSink;
 import de.adrianbartnik.source.socket.IndependentYahooEventParallelSocketSource;
 import de.adrianbartnik.source.socket.YahooEventParallelSocketSource;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -47,6 +47,7 @@ public class YahooBenchmark {
         final String hostnames_string = params.get("hostnames");
         final String ports_string = params.get("ports");
         final String output_path = params.get("path", "yahooBenchmarkOutput");
+        final boolean chaining = params.getBoolean("chaining", true);
 
         if (hostnames_string == null || hostnames_string.isEmpty() || ports_string == null || ports_string.isEmpty()) {
             throw new IllegalArgumentException("Hostname and Ports must not be empty");
@@ -76,7 +77,7 @@ public class YahooBenchmark {
         Preconditions.checkArgument(triggerIntervalMs >= 0, "Trigger interval can't be negative.");
 
         StreamExecutionEnvironment environment =
-                new FlinkJobFactory(args, true, true).setupExecutionEnvironment();
+                new FlinkJobFactory(args, chaining, true).setupExecutionEnvironment();
         environment.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         environment.setParallelism(parallelism);
 
@@ -163,7 +164,7 @@ public class YahooBenchmark {
                 }
         );
 
-        new YahooWindowCountLatencySink(sinkParallelism, output_path).createSink(args, fold);
+        new YahooWindowCountSink(sinkParallelism, output_path).createSink(args, fold);
 
         environment.execute(JOB_NAME);
     }
@@ -171,22 +172,6 @@ public class YahooBenchmark {
     /**
      * Generate in-memory tmp to campaignId map. We generate 10 ads per campaign.
      */
-    private static List<CampaignAd> GenerateCampaignMapping(int numCampaigns) {
-
-        List<CampaignAd> campaignAds = new ArrayList<>();
-
-        for (int i = 0; i < numCampaigns; i++) {
-
-            String campaign = UUID.randomUUID().toString();
-
-            for (int j = 0; j < 10; j++) {
-                campaignAds.add(new CampaignAd(UUID.randomUUID().toString(), campaign));
-            }
-        }
-
-        return campaignAds;
-    }
-
     private static List<CampaignAd> GenerateCampaignMapping(long numCampaigns, long seed) {
         Random random = new Random(seed);
 

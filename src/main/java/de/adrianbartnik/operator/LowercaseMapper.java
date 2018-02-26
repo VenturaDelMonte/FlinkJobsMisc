@@ -18,11 +18,7 @@ public class LowercaseMapper extends AbstractOperator<String, String> {
 
     @Override
     public DataStream<String> createOperator(String[] arguments, DataStream<String> dataSource) {
-        return dataSource.map(new MapFunction<String, String>() {
-            @Override
-            public String map(String tuple) throws Exception {
-                return tuple.toLowerCase();
-            }
-        }).setParallelism(parallelism).name(OPERATOR_NAME);
+        return dataSource.map((MapFunction<String, String>) String::toLowerCase)
+                .setParallelism(parallelism).name(OPERATOR_NAME);
     }
 }

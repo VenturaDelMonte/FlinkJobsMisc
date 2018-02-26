@@ -6,22 +6,7 @@ public class TextOutputSink<T> extends AbstractSink<T> {
 
     private static final String OPERATOR_NAME = "JobSink";
 
-    private static final String DEFAULT_PATH = "jobOutput";
-
     private final String path;
-
-    public TextOutputSink() {
-        this(DEFAULT_PATH);
-    }
-
-    public TextOutputSink(int parallelism) {
-        super(parallelism);
-        path = DEFAULT_PATH;
-    }
-
-    public TextOutputSink(String path) {
-        this.path = path;
-    }
 
     public TextOutputSink(int parallelism, String path) {
         super(parallelism);

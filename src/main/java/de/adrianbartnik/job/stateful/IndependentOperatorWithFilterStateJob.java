@@ -23,6 +23,7 @@ public class IndependentOperatorWithFilterStateJob {
         final int mapParallelism = params.getInt("mapParallelism", 4);
         final int sinkParallelism = params.getInt("sinkParallelism", 2);
         final boolean chaining = params.getBoolean("chaining", false);
+        final String output_path = params.get("path", "benchmarkOutput");
 
         Flink2OperatorJobFactory<Long, Long, String> creator = new Flink2OperatorJobFactory<>(args, chaining, true);
 
@@ -30,7 +31,7 @@ public class IndependentOperatorWithFilterStateJob {
                 creator.createJob(new IntervalSequenceSource(0, maxNumberOfMessages, pauseDuration, sourceParallelism),
                         new FilterLongOperator(filterParallelism),
                         new CountingMap<>(mapParallelism),
-                        new TextOutputSink<>(sinkParallelism));
+                        new TextOutputSink<>(sinkParallelism, output_path));
 
         job.execute(JOB_NAME);
     }

@@ -24,41 +24,17 @@ public class IndependentOperatorStateJob {
         final int sourceParallelism = params.getInt("sourceParallelism", 3);
         final int mapParallelism = params.getInt("mapParallelism", 4);
         final int sinkParallelism = params.getInt("sinkParallelism", 2);
-        final String external_backend = params.get("backend", "memory");
-        final String backendPath = params.get("backendPath", "file://tmp/");
-        final boolean asynchronousCheckpoints = params.getBoolean("asynchronousCheckpoints", true);
-        final boolean incrementalCheckpoints = params.getBoolean("incrementalCheckpoints", true);
-        final int checkpointingInterval = params.getInt("checkpointingInterval", 1000);
-        final long checkpointingTimeout = params.getLong("checkpointingTimeout", CheckpointConfig.DEFAULT_TIMEOUT);
-        final long latencyTrackingInterval = params.getLong("latencyTrackingInterval", 2000);
+        final String output_path = params.get("path", "benchmarkOutput");
 
         StreamExecutionEnvironment env = new FlinkJobFactory<>(args, false, true)
-                .setupExecutionEnvironment();
-
-        env.getCheckpointConfig().setCheckpointInterval(checkpointingInterval);
-        env.getCheckpointConfig().setCheckpointTimeout(checkpointingTimeout);
-        env.getConfig().setLatencyTrackingInterval(latencyTrackingInterval);
-
-        switch (external_backend) {
-            case "memory":
-                env.setStateBackend(new MemoryStateBackend());
-                break;
-            case "filesystem":
-                env.setStateBackend(new FsStateBackend(backendPath, asynchronousCheckpoints));
-                break;
-            case "rocksdb":
-                env.setStateBackend(new RocksDBStateBackend(backendPath, incrementalCheckpoints));
-                break;
-            default:
-                throw new IllegalArgumentException();
-        }
+                .setupExecutionEnvironmentWithStateBackend(params);
 
         DataStream<Long> source = new IntervalSequenceSource(0, maxNumberOfMessages, pauseDuration, sourceParallelism)
                 .createSource(args, env);
 
         DataStream<String> coutingMap = new CountingMap<Long>(mapParallelism).createOperator(args, source);
 
-        new TextOutputSink<String>(sinkParallelism).createSink(args, coutingMap);
+        new TextOutputSink<String>(sinkParallelism, output_path).createSink(args, coutingMap);
 
         env.execute(JOB_NAME);
     }

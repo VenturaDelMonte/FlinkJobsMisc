@@ -8,6 +8,8 @@ import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+
 public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunction<NewPersonEvent, AuctionEvent, Query8WindowOutput> {
 
     private static final Logger LOG = LoggerFactory.getLogger(JoiningNewUsersWithAuctionsCoGroupFunction.class);
@@ -21,31 +23,38 @@ public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunct
                         Iterable<AuctionEvent> auctions,
                         Collector<Query8WindowOutput> out) {
 
-        NewPersonEvent person = persons.iterator().next();
+        LOG.debug("{} was called with {} and {}", this.getClass(), persons, auctions);
 
-        Long personCreationTimestamp = person.getTimestamp();
-        Long personIngestionTimestamp = person.getIngestionTimestamp();
+        boolean receivedPerson = false;
 
-        long personId = person.getPersonId();
-        String personName = person.getName();
+        for (NewPersonEvent person : persons) {
 
-        for (AuctionEvent auction : auctions) {
-            Long auctionCreationTimestamp = auction.getTimestamp();
-            Long auctionIngestionTimestamp = auction.getIngestionTimestamp();
+            if (receivedPerson) {
+                LOG.debug("{} was called with {} and {}. Should only be called once", this.getClass(), person, auctions);
+                throw new IllegalStateException("Only expects to receive one person as id's should be unique");
+            }
 
-            out.collect(new Query8WindowOutput(
-                    System.currentTimeMillis(),
-                    personCreationTimestamp,
-                    personIngestionTimestamp,
-                    auctionCreationTimestamp,
-                    auctionIngestionTimestamp,
-                    personId,
-                    personName));
-        }
+            Long personCreationTimestamp = person.getTimestamp();
+            Long personIngestionTimestamp = person.getIngestionTimestamp();
 
-        if (persons.iterator().hasNext()) {
-            LOG.debug("{} was called with {} and {}", this.getClass(), persons, auctions);
-            throw new IllegalStateException("Only expects to receive one person as id's should be unique");
+            long personId = person.getPersonId();
+            String personName = person.getName();
+
+            for (AuctionEvent auction : auctions) {
+                Long auctionCreationTimestamp = auction.getTimestamp();
+                Long auctionIngestionTimestamp = auction.getIngestionTimestamp();
+
+                out.collect(new Query8WindowOutput(
+                        System.currentTimeMillis(),
+                        personCreationTimestamp,
+                        personIngestionTimestamp,
+                        auctionCreationTimestamp,
+                        auctionIngestionTimestamp,
+                        personId,
+                        personName));
+            }
+
+            receivedPerson = true;
         }
     }
 }

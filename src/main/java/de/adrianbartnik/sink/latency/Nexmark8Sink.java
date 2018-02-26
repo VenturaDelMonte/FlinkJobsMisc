@@ -7,20 +7,15 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 
 import java.io.Serializable;
 
-public class WindowLatencySink extends AbstractSink<Query8WindowOutput> implements Serializable {
+public class Nexmark8Sink extends AbstractSink<Query8WindowOutput> implements Serializable {
 
-    private static final String OPERATOR_NAME = "WindowLatencySink";
+    private static final String OPERATOR_NAME = "Nexmark8Sink";
 
     private static final long serialVersionUID = 1L;
 
     private final String path;
 
-    public WindowLatencySink(String path) {
-        super();
-        this.path = path;
-    }
-
-    public WindowLatencySink(int parallelism, String path) {
+    public Nexmark8Sink(int parallelism, String path) {
         super(parallelism);
         this.path = path;
     }

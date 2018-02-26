@@ -8,7 +8,7 @@ import de.adrianbartnik.job.parser.ParallelSocketArgumentParser;
 import de.adrianbartnik.job.timestampextractor.AuctionEventTimestampExtractor;
 import de.adrianbartnik.job.timestampextractor.PersonEventTimestampExtractor;
 import de.adrianbartnik.operator.JoiningNewUsersWithAuctionsCoGroupFunction;
-import de.adrianbartnik.sink.latency.WindowLatencySink;
+import de.adrianbartnik.sink.latency.Nexmark8Sink;
 import de.adrianbartnik.source.socket.AuctionParallelSocketSource;
 import de.adrianbartnik.source.socket.PersonParallelSocketSource;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -92,9 +92,10 @@ public class NexmarkQuery8 {
                         .where(NewPersonEvent::getPersonId).equalTo(AuctionEvent::getPersonId)
                         .window(TumblingEventTimeWindows.of(Time.seconds(windowDuration)))
                         .with(new JoiningNewUsersWithAuctionsCoGroupFunction())
+                        .name("WindowOperator")
                         .setParallelism(windowParallelism);
 
-        new WindowLatencySink(sinkParallelism, output_path).createSink(args, job);
+        new Nexmark8Sink(sinkParallelism, output_path).createSink(args, job);
 
         streamExecutionEnvironment.execute(JOB_NAME);
     }

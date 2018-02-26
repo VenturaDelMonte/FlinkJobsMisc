@@ -15,7 +15,7 @@ public class LowerCaseJob {
         FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, false);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new RabbitMQSource(), new LowercaseMapper(), new TextOutputSink<String>());
+                creator.createJob(new RabbitMQSource(), new LowercaseMapper(), new TextOutputSink<String>(1, "dummy"));
 
         job.execute(JOB_NAME);
     }

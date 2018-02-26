@@ -29,7 +29,7 @@ public class SocketMapJob {
         FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, false);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new SocketSource(), new LowercaseMapper(), new TextOutputSink<String>());
+                creator.createJob(new SocketSource(), new LowercaseMapper(), new TextOutputSink<String>(1, "dummy"));
 
         job.execute(JOB_NAME);
     }

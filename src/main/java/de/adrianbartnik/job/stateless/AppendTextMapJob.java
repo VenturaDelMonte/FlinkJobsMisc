@@ -18,7 +18,7 @@ public class AppendTextMapJob {
         FlinkJobFactory<String, String> creator = new FlinkJobFactory<>(args, false, false);
 
         StreamExecutionEnvironment job =
-                creator.createJob(new RabbitMQSource(), new TextAppender(), new TextOutputSink<String>());
+                creator.createJob(new RabbitMQSource(), new TextAppender(), new TextOutputSink<String>(1, "dummy"));
 
         job.execute(JOB_NAME);
     }

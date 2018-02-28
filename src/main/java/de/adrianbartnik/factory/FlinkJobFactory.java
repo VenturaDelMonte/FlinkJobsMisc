@@ -59,19 +59,28 @@ public class FlinkJobFactory<INPUT, OUTPUT> {
     }
 
     public StreamExecutionEnvironment setupExecutionEnvironmentWithStateBackend(ParameterTool params) throws Exception {
-        StreamExecutionEnvironment env = setupExecutionEnvironment();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        env.setRestartStrategy(new RestartStrategies.NoRestartStrategyConfiguration());
 
         final String external_backend = params.get("backend", "memory");
-        final String backendPath = params.get("backendPath", "file://tmp/");
+        final String backendPath = params.get("backendPath", "hdfs://ibm-power-1.dima.tu-berlin.de:44000/user/bartnik");
         final boolean asynchronousCheckpoints = params.getBoolean("asynchronousCheckpoints", true);
         final boolean incrementalCheckpoints = params.getBoolean("incrementalCheckpoints", true);
         final int checkpointingInterval = params.getInt("checkpointingInterval", 1000);
         final long checkpointingTimeout = params.getLong("checkpointingTimeout", CheckpointConfig.DEFAULT_TIMEOUT);
+        final int concurrentCheckpoints = params.getInt("concurrentCheckpoints", 10);
         final long latencyTrackingInterval = params.getLong("latencyTrackingInterval", 2000);
+        final boolean chaining = params.getBoolean("chaining", true);
 
         env.getCheckpointConfig().setCheckpointInterval(checkpointingInterval);
         env.getCheckpointConfig().setCheckpointTimeout(checkpointingTimeout);
+        env.getCheckpointConfig().setMaxConcurrentCheckpoints(concurrentCheckpoints);
         env.getConfig().setLatencyTrackingInterval(latencyTrackingInterval);
+
+        if (!chaining) {
+            env.disableOperatorChaining();
+        }
 
         switch (external_backend) {
             case "memory":

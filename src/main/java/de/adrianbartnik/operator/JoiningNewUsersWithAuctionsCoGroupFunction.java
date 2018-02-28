@@ -17,6 +17,9 @@ public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunct
     /**
      * CoGroups Auction and Person on person id and return the Persons name as well as ID.
      * Finding every person that created a new auction.
+     *
+     * Currently, when execution on the simple generator, it most certainly will happen, that the same person
+     * appears multiple times in a window. Currently, simple ignore that case.
      */
     @Override
     public void coGroup(Iterable<NewPersonEvent> persons,
@@ -25,14 +28,16 @@ public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunct
 
         LOG.debug("{} was called with {} and {}", this.getClass(), persons, auctions);
 
-        boolean receivedPerson = false;
+        Iterator<NewPersonEvent> personIterator = persons.iterator();
+        Iterator<AuctionEvent> auctionIterator = auctions.iterator();
 
-        for (NewPersonEvent person : persons) {
+        if (!personIterator.hasNext()) {
+            LOG.debug("Has not received person for auction events. Person there has already been created before the last window");
+        } else if (!auctionIterator.hasNext()) {
+            LOG.debug("Has not received auction for person events. Person has not yet created a auction");
+        } else {
 
-            if (receivedPerson) {
-                LOG.debug("{} was called with {} and {}. Should only be called once", this.getClass(), person, auctions);
-                throw new IllegalStateException("Only expects to receive one person as id's should be unique");
-            }
+            NewPersonEvent person = personIterator.next();
 
             Long personCreationTimestamp = person.getTimestamp();
             Long personIngestionTimestamp = person.getIngestionTimestamp();
@@ -53,8 +58,6 @@ public class JoiningNewUsersWithAuctionsCoGroupFunction extends RichCoGroupFunct
                         personId,
                         personName));
             }
-
-            receivedPerson = true;
         }
     }
 }

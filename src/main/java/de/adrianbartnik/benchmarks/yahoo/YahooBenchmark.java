@@ -102,6 +102,7 @@ public class YahooBenchmark {
                                 .filter(value -> value.eventType.equals("view"))
                                 .map(new IndependentJoinMapper<>())
                                 .assignTimestampsAndWatermarks(new AdTimestampExtractor())
+                                .name("CustomTimeExtractor")
                                 .keyBy(value -> value.campaignId)
                                 .window(TumblingEventTimeWindows.of(windowMillis));
 
@@ -113,6 +114,7 @@ public class YahooBenchmark {
                                 .filter(value -> value.eventType.equals("view"))
                                 .map(new StaticJoinMapper<>(campaignLookup))
                                 .assignTimestampsAndWatermarks(new AdTimestampExtractor())
+                                .name("CustomTimeExtractor")
                                 .keyBy(value -> value.campaignId)
                                 .window(TumblingEventTimeWindows.of(windowMillis));
 
@@ -124,6 +126,7 @@ public class YahooBenchmark {
                         .filter(value -> value.eventType.equals("view"))
                         .map(new StaticJoinMapper<>(campaignLookup))
                         .assignTimestampsAndWatermarks(new AdTimestampExtractor())
+                        .name("CustomTimeExtractor")
                         .keyBy(value -> value.campaignId)
                         .window(TumblingEventTimeWindows.of(windowMillis));
 
@@ -137,7 +140,6 @@ public class YahooBenchmark {
         if (triggerIntervalMs > 0) {
             windowedEvents.trigger(new EventAndProcessingTimeTrigger(triggerIntervalMs));
         }
-
 
         SingleOutputStreamOperator<WindowedCount> fold = windowedEvents.fold(
                 new WindowedCount(null, "", 0, new Timestamp(0L)),
@@ -163,6 +165,8 @@ public class YahooBenchmark {
                     }
                 }
         );
+
+        fold.name("YahooWindowOperator");
 
         new YahooWindowCountSink(sinkParallelism, output_path).createSink(args, fold);
 

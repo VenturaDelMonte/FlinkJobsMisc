@@ -19,6 +19,13 @@ public class StaticJoinMapper<T extends Event> implements MapFunction<T, JoinedE
 
     @Override
     public JoinedEventWithCampaign map(T value) {
-        return new JoinedEventWithCampaign(campaigns.get(value.advertisingId), value.advertisingId, value.eventTime);
+
+        String campaignID = campaigns.get(value.advertisingId);
+
+        if (campaignID == null) {
+            throw new IllegalStateException("Could not find corresponding campaign");
+        }
+
+        return new JoinedEventWithCampaign(campaignID, value.advertisingId, value.eventTime);
     }
 }

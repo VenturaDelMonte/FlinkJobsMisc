@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.List;
@@ -141,6 +142,10 @@ public abstract class AbstractSocketSourceFunction<R> extends RichParallelSource
 
     private String chooseHostname() throws Exception {
         String localHostname = hostnames.get(getRuntimeContext().getIndexOfThisSubtask()), remoteHostname = "";
+
+        if (hostnames.size() == 1 && hostnames.get(0).equals("l")) {
+            return InetAddress.getLocalHost().getHostName();
+        }
 
         for (String hostname : listStateHostnames.get()) {
             remoteHostname = hostname;
